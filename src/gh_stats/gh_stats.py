@@ -24,6 +24,15 @@ def make_request(user: str):
     return requests.get(f"https://api.github.com/users/{user}/events").json()
 
 
+def count_commits(resp) -> int:
+    count = 0
+    for item in resp:
+        if item["type"] == "pushevent":
+            count += len(resp[0]["payload"]["commits"])
+
+    return count
+
+
 def main() -> int:
     log("start")
 
@@ -31,6 +40,7 @@ def main() -> int:
     log(f"{username=}")
 
     resp = make_request(username)
+    print(count_commits(resp))
 
     log("end")
     return 0
