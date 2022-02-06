@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import os
+
 def log(msg:str):
     with open('gh_stat.log', 'a') as file:
         file.write(msg + "\n")
