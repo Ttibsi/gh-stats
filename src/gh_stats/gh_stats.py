@@ -2,6 +2,7 @@
 
 import os
 import requests
+import pprint as p
 
 def log(msg:str):
     with open('gh_stat.log', 'a') as file:
@@ -21,14 +22,14 @@ def get_username() -> str:
 
 
 def make_request(user: str):
-    return requests.get(f"https://api.github.com/users/{user}/events").json()
+    return requests.get(f"https://api.github.com/users/{user}/events?page=1&per_page=100").json()
 
 
 def count_commits(resp) -> int:
     count = 0
     for item in resp:
-        if item["type"] == "pushevent":
-            count += len(resp[0]["payload"]["commits"])
+        if item["type"] == "PushEvent":
+            count += len(item["payload"]["commits"])
 
     return count
 
