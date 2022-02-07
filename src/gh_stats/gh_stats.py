@@ -33,9 +33,13 @@ def make_request(user: str) -> object:
     ).json()
 
 
-def count_commits(resp: object, current_year: int) -> int:
+def count_commits(user: str, current_year: int) -> int:
     count = 0
+    resp = make_request(user)
     for item in resp:
+        if not item['created_at'].startswith(str(current_year)):
+            break
+
         if item["type"] == "PushEvent":
             count += len(item["payload"]["commits"])
 
@@ -49,9 +53,9 @@ def main() -> int:
     log(f"{username=}")
 
     current_year = get_current_year()
-
-    resp = make_request(username)
-    print(count_commits(resp, current_year))
+    commit_count = (count_commits(username, current_year))
+    log(f"{commit_count=}")
+    print(f"Commits this year: {commit_count}")
 
     log("end")
     return 0
