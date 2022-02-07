@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-
 import os
-from datetime import date
-import requests
 import pprint as p
+from datetime import date
 
-def log(msg:str):
-    with open('gh_stat.log', 'a') as file:
+import requests
+
+
+def log(msg: str):
+    with open("gh_stat.log", "a") as file:
         file.write(msg + "\n")
 
 
@@ -27,10 +28,12 @@ def get_current_year() -> int:
 
 
 def make_request(user: str) -> object:
-    return requests.get(f"https://api.github.com/users/{user}/events?page=1&per_page=100").json()
+    return requests.get(
+        f"https://api.github.com/users/{user}/events?page=1&per_page=100"
+    ).json()
 
 
-def count_commits(resp:object, current_year:int) -> int:
+def count_commits(resp: object, current_year: int) -> int:
     count = 0
     for item in resp:
         if item["type"] == "PushEvent":
@@ -53,5 +56,6 @@ def main() -> int:
     log("end")
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     raise SystemExit(main())
