@@ -27,21 +27,24 @@ def get_current_year() -> int:
     return int(date.today().strftime("%Y"))
 
 
-def make_request(user: str) -> object:
+def make_request(user: str, page:int=1) -> object:
     return requests.get(
-        f"https://api.github.com/users/{user}/events?page=1&per_page=100"
+        f"https://api.github.com/users/{user}/events?page={page}&per_page=100"
     ).json()
 
 
 def count_commits(user: str, current_year: int) -> int:
     count = 0
+    page_count = 1
     resp = make_request(user)
-    for item in resp:
-        if not item['created_at'].startswith(str(current_year)):
-            break
+    
+    while resp[0]['created_at'][:4] == str(current_year):
+        for item in resp:
+            if item["type"] == "PushEvent":
+                count += len(item["payload"]["commits"])
 
-        if item["type"] == "PushEvent":
-            count += len(item["payload"]["commits"])
+        page_count += 1
+        resp = make_request(user, page_count)
 
     return count
 
