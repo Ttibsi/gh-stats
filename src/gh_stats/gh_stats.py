@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+from datetime import date
 import requests
 import pprint as p
 
@@ -21,11 +22,15 @@ def get_username() -> str:
     return name_line[1].lower().strip()
 
 
-def make_request(user: str):
+def get_current_year() -> int:
+    return int(date.today().strftime("%Y"))
+
+
+def make_request(user: str) -> object:
     return requests.get(f"https://api.github.com/users/{user}/events?page=1&per_page=100").json()
 
 
-def count_commits(resp) -> int:
+def count_commits(resp:object, current_year:int) -> int:
     count = 0
     for item in resp:
         if item["type"] == "PushEvent":
@@ -40,8 +45,10 @@ def main() -> int:
     username = get_username()
     log(f"{username=}")
 
+    current_year = get_current_year()
+
     resp = make_request(username)
-    print(count_commits(resp))
+    print(count_commits(resp, current_year))
 
     log("end")
     return 0
