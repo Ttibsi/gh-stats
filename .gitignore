@@ -1,2 +1,4 @@
 src/gh_stats/__pycache__/
 test/__pycache__/
+src/gh_stats/gh_stat.log
+test/gh_stat.log
