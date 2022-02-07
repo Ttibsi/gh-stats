@@ -27,7 +27,7 @@ def get_current_year() -> int:
     return int(date.today().strftime("%Y"))
 
 
-def make_request(user: str, page:int=1) -> object:
+def make_request(user: str, page: int = 1) -> object:
     return requests.get(
         f"https://api.github.com/users/{user}/events?page={page}&per_page=100"
     ).json()
@@ -37,11 +37,16 @@ def count_commits(user: str, current_year: int) -> int:
     count = 0
     page_count = 1
     resp = make_request(user)
-    
-    while resp[0]['created_at'][:4] == str(current_year):
-        for item in resp:
+
+    while resp[0]["created_at"][:4] == str(current_year):  # type: ignore
+        for item in resp:  # type: ignore
+            if item["created_at"][:4] != str(current_year):
+                break
+
             if item["type"] == "PushEvent":
-                count += len(item["payload"]["commits"])
+                count += item["payload"]["size"]
+            else:
+                count += 1
 
         page_count += 1
         resp = make_request(user, page_count)
@@ -56,7 +61,7 @@ def main() -> int:
     log(f"{username=}")
 
     current_year = get_current_year()
-    commit_count = (count_commits(username, current_year))
+    commit_count = count_commits(username, current_year)
     log(f"{commit_count=}")
     print(f"Commits this year: {commit_count}")
 
