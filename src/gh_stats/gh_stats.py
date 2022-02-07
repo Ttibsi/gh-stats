@@ -5,6 +5,21 @@ from datetime import date
 
 import requests
 
+# https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
+GITHUB_EVENTS = [
+    "CommitCommentEvent",  # Commit via GH web ui
+    "CreateEvent",
+    "DeleteEvent",
+    "ForkEvent",
+    "IssueCommentEvent",
+    "IssuesEvent",
+    "PullRequestEvent",
+    "PullRequestReviewEvent",
+    "PullRequestReviewCommentEvent",
+    "ReleaseEvent",  # Make a git release
+    "WatchEvent",  # Star a repo
+]
+
 
 def log(msg: str):
     with open("gh_stat.log", "a") as file:
@@ -29,7 +44,7 @@ def get_current_year() -> int:
 
 def make_request(user: str, page: int = 1) -> object:
     return requests.get(
-        f"https://api.github.com/users/{user}/events?page={page}&per_page=100"
+        f"https://api.github.com/users/{user}/events?page={page}"
     ).json()
 
 
@@ -45,7 +60,7 @@ def count_commits(user: str, current_year: int) -> int:
 
             if item["type"] == "PushEvent":
                 count += item["payload"]["size"]
-            else:
+            elif item["type"] in GITHUB_EVENTS:
                 count += 1
 
         page_count += 1
@@ -63,7 +78,7 @@ def main() -> int:
     current_year = get_current_year()
     commit_count = count_commits(username, current_year)
     log(f"{commit_count=}")
-    print(f"Commits this year: {commit_count}")
+    print(f"Github interactions: {commit_count}")
 
     log("end")
     return 0
