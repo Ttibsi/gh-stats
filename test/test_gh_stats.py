@@ -1,10 +1,6 @@
 import pytest
 
-from src.gh_stats import gh_stats
-
-
-def test_main():
-    assert gh_stats.main() == 0
+from src.gh_stats import gh_stats  # type: ignore
 
 
 def test_get_username():
