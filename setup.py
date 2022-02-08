@@ -12,10 +12,13 @@ setup(
     install_requires=[
         "requests",
     ],
-    packages=find_packages(exclude="test*"),
+    packages=find_packages(
+        where="src",
+    ),
+    package_dir={"": "src"},
     entry_points={
         "console_scripts": [
-            "ghstat = src.gh_stats.gh_stats:main",
+            "ghstat = gh_stats.gh_stats:main",
         ],
     },
 )
