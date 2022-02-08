@@ -18,3 +18,4 @@ Thus, `gh_stats` was born
 
 Feel free to make any PRs you see fit, or check out the [issues page](https://github.com/Ttibsi/gh_stats/issues) if you're unsure where to start
 Please make use of the [pre-commit](http://pre-commit.com) config file attached to automatically format and type check your PRs
+(This will eventually be replaced with automated CI)
