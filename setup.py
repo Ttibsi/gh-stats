@@ -3,12 +3,12 @@ from setuptools import setup  # type: ignore
 
 
 setup(
-    name="gh_stats",
+    name="gh-stats",
     version="0.1.0",
     description="Get statistics about your Github commit history",
     author="Ttibsi",
     author_email="ashisbitt@icloud.com",
-    url="https://github.com/ttibsi/gh_stats",
+    url="https://github.com/ttibsi/gh-stats",
     install_requires=[
         "requests",
     ],
