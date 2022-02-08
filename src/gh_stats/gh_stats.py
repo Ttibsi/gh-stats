@@ -20,10 +20,11 @@ GITHUB_EVENTS = [
     "WatchEvent",  # Star a repo
 ]
 
-response_length = 100  # max 100
+response_length = 100  # max 100, default 30
 
 
-def log(msg: str):
+def log(msg: str) -> None:
+    """Not the fanciest logging, but it works"""
     with open("gh_stat.log", "a") as file:
         file.write(msg + "\n")
 
@@ -33,8 +34,9 @@ def get_username() -> str:
         git_lines = git_file.readlines()
 
     for line in git_lines:
-        if line.startswith("name"):
-            name_line = line.split(" = ")
+        name_line = line.split(" = ") if line.startswith("name") else ""
+
+        if name_line != "":
             break
 
     return name_line[1].lower().strip()
@@ -52,6 +54,7 @@ def make_request(user: str, page: int = 1):
 
 
 def count_commits(user: str, current_year: int) -> int:
+    """This function needs unit tests"""
     count = 0
     page_count = 1
     resp = make_request(user)
@@ -77,7 +80,6 @@ def main() -> int:
     log("start")
 
     username = get_username()
-    username = "asottile"
     log(f"{username=}")
 
     current_year = get_current_year()
