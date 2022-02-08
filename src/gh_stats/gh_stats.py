@@ -20,6 +20,8 @@ GITHUB_EVENTS = [
     "WatchEvent",  # Star a repo
 ]
 
+response_length = 100  # max 100
+
 
 def log(msg: str):
     with open("gh_stat.log", "a") as file:
@@ -42,9 +44,10 @@ def get_current_year() -> int:
     return int(date.today().strftime("%Y"))
 
 
-def make_request(user: str, page: int = 1) -> object:
+def make_request(user: str, page: int = 1):
+    log(f"Request call to page {page}")
     return requests.get(
-        f"https://api.github.com/users/{user}/events?page={page}"
+        f"https://api.github.com/users/{user}/events?page={page}&per_page={response_length}"
     ).json()
 
 
@@ -53,7 +56,8 @@ def count_commits(user: str, current_year: int) -> int:
     page_count = 1
     resp = make_request(user)
 
-    while resp[0]["created_at"][:4] == str(current_year):  # type: ignore
+    while resp[0]["created_at"][:4] == str(current_year) and len(resp) == response_length:  # type: ignore
+        log(f"Page {page_count} is length {len(resp)}")
         for item in resp:  # type: ignore
             if item["created_at"][:4] != str(current_year):
                 break
@@ -73,6 +77,7 @@ def main() -> int:
     log("start")
 
     username = get_username()
+    username = "asottile"
     log(f"{username=}")
 
     current_year = get_current_year()
