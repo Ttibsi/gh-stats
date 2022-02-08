@@ -4,9 +4,16 @@ Find out infromation about your git commit history with this one simple tool! (e
 
 ### Installation
 
-* Clone repo
-* `cd gh_stats/src/gh_stats`
-* run `./gh_stats.py`
+```
+$ git clone git@github.com:Ttibsi/gh_stats.git
+$ cd gh_stats
+$ pip install .
+```
+
+### Usage
+
+Currently the package has no arguments and will only run with `ghstat`. Other features and flags are coming soon
+
 
 ### Rationale
 
