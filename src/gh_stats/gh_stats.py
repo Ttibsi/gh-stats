@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import argparse
 import os
 import pprint as p
 from datetime import date
+from typing import Sequence
 
 import requests
 
@@ -23,10 +25,13 @@ GITHUB_EVENTS = [
 response_length = 100  # max 100, default 30
 
 
-def log(msg: str) -> None:
+def log(msg: str, verbose: int = False) -> None:
     """Not the fanciest logging, but it works"""
     with open("gh_stat.log", "a") as file:
         file.write(msg + "\n")
+
+    if verbose:
+        print(msg)
 
 
 def get_username() -> str:
@@ -76,7 +81,15 @@ def count_commits(user: str, current_year: int) -> int:
     return count
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-v", "--verbose", help="Verbose output of operations", action="store_true"
+    )
+
+    args = parser.parse_args(argv)
+    p.pprint(vars(args))
+
     log("start")
 
     username = get_username()
