@@ -3,6 +3,7 @@ import argparse
 import os
 import pprint as p
 from datetime import date
+from typing import Any
 from typing import Sequence
 
 import requests
@@ -51,14 +52,14 @@ def get_current_year() -> int:
     return int(date.today().strftime("%Y"))
 
 
-def make_request(args, user: str, page: int = 1):
+def make_request(args: dict[Any, Any], user: str, page: int = 1):
     log(f"Request call to page {page}", args["verbose"])
     return requests.get(
         f"https://api.github.com/users/{user}/events?page={page}&per_page={response_length}"
     ).json()
 
 
-def count_commits(args, user: str, current_year: int) -> int:
+def count_commits(args: dict[Any, Any], user: str, current_year: int) -> int:
     """This function needs unit tests"""
     count = 0
     page_count = 1
