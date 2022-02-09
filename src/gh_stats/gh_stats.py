@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+import argparse
 import os
 import pprint as p
 from datetime import date
+from typing import Any
+from typing import Sequence
 
 import requests
 
@@ -23,10 +26,13 @@ GITHUB_EVENTS = [
 response_length = 100  # max 100, default 30
 
 
-def log(msg: str) -> None:
+def log(msg: str, verbose: bool) -> None:
     """Not the fanciest logging, but it works"""
     with open("gh_stat.log", "a") as file:
         file.write(msg + "\n")
+
+    if verbose:
+        print(msg)
 
 
 def get_username() -> str:
@@ -46,21 +52,21 @@ def get_current_year() -> int:
     return int(date.today().strftime("%Y"))
 
 
-def make_request(user: str, page: int = 1):
-    log(f"Request call to page {page}")
+def make_request(args: dict[Any, Any], user: str, page: int = 1):
+    log(f"Request call to page {page}", args["verbose"])
     return requests.get(
         f"https://api.github.com/users/{user}/events?page={page}&per_page={response_length}"
     ).json()
 
 
-def count_commits(user: str, current_year: int) -> int:
+def count_commits(args: dict[Any, Any], user: str, current_year: int) -> int:
     """This function needs unit tests"""
     count = 0
     page_count = 1
-    resp = make_request(user)
+    resp = make_request(args, user)
 
     while resp[0]["created_at"][:4] == str(current_year) and len(resp) == response_length:  # type: ignore
-        log(f"Page {page_count} is length {len(resp)}")
+        log(f"Page {page_count} is length {len(resp)}", args["verbose"])
         for item in resp:  # type: ignore
             if item["created_at"][:4] != str(current_year):
                 break
@@ -71,23 +77,46 @@ def count_commits(user: str, current_year: int) -> int:
                 count += 1
 
         page_count += 1
-        resp = make_request(user, page_count)
+        log(f"In-progress commit count is at: {count}", args["verbose"])
+        resp = make_request(args, user, page_count)
 
     return count
 
 
-def main() -> int:
-    log("start")
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-v", "--verbose", help="Verbose output of operations", action="store_true"
+    )
+    parser.add_argument(
+        "-f",
+        "--flags",
+        help="Display status of all flags for debugging purposes",
+        action="store_true",
+    )
 
+    args = vars(parser.parse_args(argv))
+
+    if args["flags"]:
+        p.pprint(args)
+
+    log("Starting gh_stats", args["verbose"])
+    log(f"Accepted arguments: {args}", args["verbose"])
+
+    log("Fetching github username", args["verbose"])
     username = get_username()
-    log(f"{username=}")
+    log(f"{username=}", args["verbose"])
 
     current_year = get_current_year()
-    commit_count = count_commits(username, current_year)
-    log(f"{commit_count=}")
+    log(f"Checking year: {current_year}", args["verbose"])
+
+    log("Count commits in year", args["verbose"])
+    commit_count = count_commits(args, username, current_year)
+    log(f"{commit_count=}", args["verbose"])
+
     print(f"Github interactions: {commit_count}")
 
-    log("end")
+    log("Closing gh_stats", args["verbose"])
     return 0
 
 
