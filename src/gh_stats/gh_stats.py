@@ -25,7 +25,7 @@ GITHUB_EVENTS = [
 response_length = 100  # max 100, default 30
 
 
-def log(msg: str, verbose: int = False) -> None:
+def log(msg: str, verbose: bool) -> None:
     """Not the fanciest logging, but it works"""
     with open("gh_stat.log", "a") as file:
         file.write(msg + "\n")
@@ -51,21 +51,21 @@ def get_current_year() -> int:
     return int(date.today().strftime("%Y"))
 
 
-def make_request(user: str, page: int = 1):
-    log(f"Request call to page {page}")
+def make_request(args, user: str, page: int = 1):
+    log(f"Request call to page {page}", args["verbose"])
     return requests.get(
         f"https://api.github.com/users/{user}/events?page={page}&per_page={response_length}"
     ).json()
 
 
-def count_commits(user: str, current_year: int) -> int:
+def count_commits(args, user: str, current_year: int) -> int:
     """This function needs unit tests"""
     count = 0
     page_count = 1
-    resp = make_request(user)
+    resp = make_request(args, user)
 
     while resp[0]["created_at"][:4] == str(current_year) and len(resp) == response_length:  # type: ignore
-        log(f"Page {page_count} is length {len(resp)}")
+        log(f"Page {page_count} is length {len(resp)}", args["verbose"])
         for item in resp:  # type: ignore
             if item["created_at"][:4] != str(current_year):
                 break
@@ -76,7 +76,7 @@ def count_commits(user: str, current_year: int) -> int:
                 count += 1
 
         page_count += 1
-        resp = make_request(user, page_count)
+        resp = make_request(args, user, page_count)
 
     return count
 
@@ -87,20 +87,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         "-v", "--verbose", help="Verbose output of operations", action="store_true"
     )
 
-    args = parser.parse_args(argv)
-    p.pprint(vars(args))
+    args = vars(parser.parse_args(argv))
+    p.pprint(args)
 
-    log("start")
+    log("start", args["verbose"])
 
     username = get_username()
-    log(f"{username=}")
+    log(f"{username=}", args["verbose"])
 
     current_year = get_current_year()
-    commit_count = count_commits(username, current_year)
-    log(f"{commit_count=}")
+    commit_count = count_commits(args, username, current_year)
+    log(f"{commit_count=}", args["verbose"])
     print(f"Github interactions: {commit_count}")
 
-    log("end")
+    log("end", args["verbose"])
     return 0
 
 
