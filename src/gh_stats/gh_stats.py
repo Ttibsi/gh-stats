@@ -76,6 +76,7 @@ def count_commits(args, user: str, current_year: int) -> int:
                 count += 1
 
         page_count += 1
+        log(f"In-progress commit count is at: {count}", args["verbose"])
         resp = make_request(args, user, page_count)
 
     return count
@@ -88,19 +89,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
 
     args = vars(parser.parse_args(argv))
-    p.pprint(args)
 
-    log("start", args["verbose"])
+    log("Starting gh_stats", args["verbose"])
+    log(f"Accepted arguments: {args}", args["verbose"])
 
+    log("Fetching github username", args["verbose"])
     username = get_username()
     log(f"{username=}", args["verbose"])
 
     current_year = get_current_year()
+    log(f"Checking year: {current_year}", args["verbose"])
+
+    log("Count commits in year", args["verbose"])
     commit_count = count_commits(args, username, current_year)
     log(f"{commit_count=}", args["verbose"])
+
     print(f"Github interactions: {commit_count}")
 
-    log("end", args["verbose"])
+    log("Closing gh_stats", args["verbose"])
     return 0
 
 
