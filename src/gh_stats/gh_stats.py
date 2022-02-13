@@ -76,8 +76,9 @@ def count_commits(args: dict[Any, Any], user: str) -> tuple[int, int]:
     log(f"Checking year: {current_year}", args["verbose"])
 
     current_month = get_current_month()
-    log(f"Checking month: {current_month}", args["verbose"])
     month_count = 0
+    if args["extend"]:
+        log(f"Checking month: {current_month}", args["verbose"])
 
     resp = make_request(args, user)
 
@@ -92,7 +93,7 @@ def count_commits(args: dict[Any, Any], user: str) -> tuple[int, int]:
             elif item["type"] in GITHUB_EVENTS:
                 count += 1
 
-            if item["created_at"][5:7] == str(current_month):
+            if item["created_at"][5:7] == current_month:
                 if item["type"] == "PushEvent":
                     month_count += item["payload"]["size"]
                 elif item["type"] in GITHUB_EVENTS:
@@ -105,10 +106,7 @@ def count_commits(args: dict[Any, Any], user: str) -> tuple[int, int]:
             log(f"In-progress month count is at: {month_count}", args["verbose"])
         resp = make_request(args, user, page_count)
 
-    if args["extend"]:
-        return count, month_count
-    else:
-        return count, 0
+    return count, month_count if args["extend"] else 0
 
 
 def main(argv: Sequence[str] | None = None) -> int:
