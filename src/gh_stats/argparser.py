@@ -16,4 +16,8 @@ def parser(argv: Sequence[str] | None = None):
         action="store_true",
     )
 
+    parser.add_argument(
+        "-e", "--extend", help="Show more statistics", action="store_true"
+    )
+
     return vars(parser.parse_args(argv))
