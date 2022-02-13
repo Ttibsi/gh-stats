@@ -5,6 +5,7 @@ import pprint as p
 from datetime import date
 from typing import Any
 from typing import Sequence
+from typing import Union
 
 import argparser  # type: ignore
 import requests
@@ -51,6 +52,13 @@ def get_username() -> str:
 
 def get_current_year() -> int:
     return int(date.today().strftime("%Y"))
+
+
+def get_current_month(name: bool = False) -> Union[str, int]:
+    if name:
+        return date.today().strftime("%B")
+    else:
+        return int(date.today().strftime("%m"))
 
 
 def make_request(args: dict[Any, Any], user: str, page: int = 1):
