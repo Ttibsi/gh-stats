@@ -5,7 +5,6 @@ import os
 import pprint as p
 from typing import Any
 from typing import Sequence
-from typing import Union
 
 import argparser  # type: ignore
 import requests
