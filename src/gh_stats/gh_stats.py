@@ -137,10 +137,10 @@ def print_output(statblk: stats.Statblock, extend: bool) -> None:
     print(f"Github interactions: {statblk.count}")
 
     if extend:
-        print(f"Monthly interactions ({statblk.month_name}): {statblk.month_count}")
-
         (most_common_repo,) = statblk.projects.most_common(1)
-        print(f"Most active repo: {most_common_repo}")
+        print(f"Most active repo ({most_common_repo[0]}): {most_common_repo[1]}")
+
+        print(f"Monthly interactions ({statblk.month_name}): {statblk.month_count}")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
