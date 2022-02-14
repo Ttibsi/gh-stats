@@ -92,29 +92,55 @@ def count_commits(args: dict[Any, Any], statblk: stats.Statblock) -> stats.Statb
             if item["created_at"][:4] != str(current_year):
                 break
 
+            # Get year count
             if item["type"] == "PushEvent":
                 statblk.count += item["payload"]["size"]
+            elif item["type"] == "PullRequestEvent":
+                statblk.count += item["payload"]["pull_request"]["commits"]
             elif item["type"] in GITHUB_EVENTS:
                 statblk.count += 1
 
+            # Get month count
             if item["created_at"][5:7] == statblk.month:
                 if item["type"] == "PushEvent":
                     statblk.month_count += item["payload"]["size"]
+                elif item["type"] == "PullRequestEvent":
+                    statblk.month_count += item["payload"]["pull_request"]["commits"]
                 elif item["type"] in GITHUB_EVENTS:
                     statblk.month_count += 1
 
-            statblk.projects[item["repo"]["name"]] += item["payload"]["size"]
+            # Count commits per repo
+            if item["type"] == "PushEvent":
+                statblk.projects[item["repo"]["name"]] += item["payload"]["size"]
+            elif item["type"] == "PullRequestEvent":
+                statblk.projects[item["repo"]["name"]] += item["payload"][
+                    "pull_request"
+                ]["commits"]
+            elif item["type"] in GITHUB_EVENTS:
+                statblk.projects[item["repo"]["name"]] += 1
 
         log(f"In-progress commit count is at: {statblk.count}", args["verbose"])
+
         if args["extend"]:
             log(
                 f"In-progress month count is at: {statblk.month_count}", args["verbose"]
             )
+            log(f"Commits per repo: \n{statblk.projects}", args["verbose"])
 
         page_count += 1
         resp = make_request(args, statblk.username, page_count)
 
     return statblk
+
+
+def print_output(statblk: stats.Statblock, extend: bool) -> None:
+    print(f"Github interactions: {statblk.count}")
+
+    if extend:
+        print(f"Monthly interactions ({statblk.month_name}): {statblk.month_count}")
+
+        (most_common_repo,) = statblk.projects.most_common(1)
+        print(f"Most active repo: {most_common_repo}")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -137,12 +163,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         log("Count commits in year", args["verbose"])
 
     statblk = count_commits(args, statblk)
-    log(f"commit_count={statblk.count}", args["verbose"])
+    log(f"commit_count={statblk.count}\n", args["verbose"])
 
-    print(f"\nGithub interactions: {statblk.count}")
-
-    if args["extend"]:
-        print(f"Monthly interactions {statblk.month_name}: {statblk.month_count}")
+    print_output(statblk, args["extend"])
 
     log("Closing gh_stats", args["verbose"])
     return 0
