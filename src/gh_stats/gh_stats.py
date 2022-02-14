@@ -9,7 +9,7 @@ from typing import Sequence
 
 import argparser  # type: ignore
 import requests
-import stats
+import stats  # type: ignore
 
 # https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
 GITHUB_EVENTS = [
@@ -62,26 +62,30 @@ def get_current_year() -> int:
     return int(datetime.date.today().strftime("%Y"))
 
 
-def get_current_month(name: bool = False) -> str:
+def get_current_month(statblk: stats.Statblock) -> None:
     statblk.month_name = datetime.date.today().strftime("%b")
     statblk.month = str(datetime.datetime.now().month).zfill(2)
 
 
-def count_commits(args: dict[Any, Any], statblk: Statblock) -> Statblock:
+def count_commits(args: dict[Any, Any], statblk: stats.Statblock) -> stats.Statblock:
     """This function needs unit tests"""
     page_count = 1
 
     current_year = get_current_year()
     log(f"Checking year: {current_year}", args["verbose"])
 
-    get_current_month()
+    get_current_month(statblk)
 
     if args["extend"]:
         log(f"Checking month: {statblk.month}", args["verbose"])
 
-    resp = make_request(args, user)
+    resp = make_request(args, statblk.username)
 
-    while resp[0]["created_at"][:4] == str(current_year) and len(resp) == response_length:  # type: ignore
+    while (
+        resp[0]["created_at"][:4] == str(current_year)  # type: ignore
+        and len(resp) == response_length  # type: ignore
+    ):
+
         log(f"Page {page_count} is length {len(resp)}", args["verbose"])
 
         for item in resp:  # type: ignore
@@ -108,7 +112,7 @@ def count_commits(args: dict[Any, Any], statblk: Statblock) -> Statblock:
             )
 
         page_count += 1
-        resp = make_request(args, user, page_count)
+        resp = make_request(args, statblk.username, page_count)
 
     return statblk
 
@@ -138,8 +142,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(f"\nGithub interactions: {statblk.count}")
 
     if args["extend"]:
-        statblk.month = get_current_month(True)
-        print(f"Monthly interactions {statblk.month}: {statblk.month_count}")
+        print(f"Monthly interactions {statblk.month_name}: {statblk.month_count}")
 
     log("Closing gh_stats", args["verbose"])
     return 0
