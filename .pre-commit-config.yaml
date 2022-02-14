@@ -31,3 +31,4 @@ repos:
         additional_dependencies: [types-all, pytest==6.2.5]
         args:
           - "--show-traceback"
+          - "--ignore-missing-imports"

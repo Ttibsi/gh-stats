@@ -7,9 +7,9 @@ from collections import Counter
 from typing import Any
 from typing import Sequence
 
-import argparser  # type: ignore
+import argparser
 import requests
-import stats  # type: ignore
+import stats
 
 # https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
 GITHUB_EVENTS = [
