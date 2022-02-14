@@ -3,11 +3,13 @@ import argparse
 import datetime
 import os
 import pprint as p
+from collections import Counter
 from typing import Any
 from typing import Sequence
 
-import argparser  # type: ignore
+import argparser
 import requests
+import stats
 
 # https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
 GITHUB_EVENTS = [
@@ -60,57 +62,90 @@ def get_current_year() -> int:
     return int(datetime.date.today().strftime("%Y"))
 
 
-def get_current_month(name: bool = False) -> str:
-    if name:
-        return datetime.date.today().strftime("%b")
-    else:
-        return str(datetime.datetime.now().month).zfill(2)
+def get_current_month(statblk: stats.Statblock) -> None:
+    statblk.month_name = datetime.date.today().strftime("%b")
+    statblk.month = str(datetime.datetime.now().month).zfill(2)
 
 
-def count_commits(args: dict[Any, Any], user: str) -> tuple[int, int]:
+def count_commits(args: dict[Any, Any], statblk: stats.Statblock) -> stats.Statblock:
     """This function needs unit tests"""
-    count = 0
     page_count = 1
 
     current_year = get_current_year()
     log(f"Checking year: {current_year}", args["verbose"])
 
-    current_month = get_current_month()
-    month_count = 0
+    get_current_month(statblk)
+
     if args["extend"]:
-        log(f"Checking month: {current_month}", args["verbose"])
+        log(f"Checking month: {statblk.month}", args["verbose"])
 
-    resp = make_request(args, user)
+    resp = make_request(args, statblk.username)
 
-    while resp[0]["created_at"][:4] == str(current_year) and len(resp) == response_length:  # type: ignore
+    while (
+        resp[0]["created_at"][:4] == str(current_year)  # type: ignore
+        and len(resp) == response_length  # type: ignore
+    ):
+
         log(f"Page {page_count} is length {len(resp)}", args["verbose"])
+
         for item in resp:  # type: ignore
             if item["created_at"][:4] != str(current_year):
                 break
 
+            # Get year count
             if item["type"] == "PushEvent":
-                count += item["payload"]["size"]
+                statblk.count += item["payload"]["size"]
+            elif item["type"] == "PullRequestEvent":
+                statblk.count += item["payload"]["pull_request"]["commits"]
             elif item["type"] in GITHUB_EVENTS:
-                count += 1
+                statblk.count += 1
 
-            if item["created_at"][5:7] == current_month:
+            # Get month count
+            if item["created_at"][5:7] == statblk.month:
                 if item["type"] == "PushEvent":
-                    month_count += item["payload"]["size"]
+                    statblk.month_count += item["payload"]["size"]
+                elif item["type"] == "PullRequestEvent":
+                    statblk.month_count += item["payload"]["pull_request"]["commits"]
                 elif item["type"] in GITHUB_EVENTS:
-                    month_count += 1
+                    statblk.month_count += 1
 
-        page_count += 1
-        log(f"In-progress commit count is at: {count}", args["verbose"])
+            # Count commits per repo
+            if item["type"] == "PushEvent":
+                statblk.projects[item["repo"]["name"]] += item["payload"]["size"]
+            elif item["type"] == "PullRequestEvent":
+                statblk.projects[item["repo"]["name"]] += item["payload"][
+                    "pull_request"
+                ]["commits"]
+            elif item["type"] in GITHUB_EVENTS:
+                statblk.projects[item["repo"]["name"]] += 1
+
+        log(f"In-progress commit count is at: {statblk.count}", args["verbose"])
 
         if args["extend"]:
-            log(f"In-progress month count is at: {month_count}", args["verbose"])
-        resp = make_request(args, user, page_count)
+            log(
+                f"In-progress month count is at: {statblk.month_count}", args["verbose"]
+            )
+            log(f"Commits per repo: \n{statblk.projects}", args["verbose"])
 
-    return count, month_count if args["extend"] else 0
+        page_count += 1
+        resp = make_request(args, statblk.username, page_count)
+
+    return statblk
+
+
+def print_output(statblk: stats.Statblock, extend: bool) -> None:
+    print(f"Github interactions: {statblk.count}")
+
+    if extend:
+        (most_common_repo,) = statblk.projects.most_common(1)
+        print(f"Most active repo ({most_common_repo[0]}): {most_common_repo[1]}")
+
+        print(f"Monthly interactions ({statblk.month_name}): {statblk.month_count}")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = argparser.parser(argv)
+    statblk = stats.Statblock()
 
     if args["flags"]:
         p.pprint(args)
@@ -119,24 +154,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     log(f"Accepted arguments: {args}", args["verbose"])
 
     log("Fetching github username", args["verbose"])
-    username = get_username()
-    log(f"{username=}\n", args["verbose"])
+    statblk.username = get_username()
+    log(f"username = {statblk.username}\n", args["verbose"])
 
     if args["extend"]:
         log("Count extended commits", args["verbose"])
     else:
         log("Count commits in year", args["verbose"])
 
-    output = count_commits(args, username)
-    log(f"commit_count={output}", args["verbose"])
+    statblk = count_commits(args, statblk)
+    log(f"commit_count={statblk.count}\n", args["verbose"])
 
-    commit_count, month_count = output
-
-    print(f"\nGithub interactions: {commit_count}")
-
-    if args["extend"]:
-        month = get_current_month(True)
-        print(f"Monthly interactions {month}: {month_count}")
+    print_output(statblk, args["extend"])
 
     log("Closing gh_stats", args["verbose"])
     return 0
