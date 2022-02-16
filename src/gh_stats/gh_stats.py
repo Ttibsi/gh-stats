@@ -119,6 +119,13 @@ def count_commits(args: dict[Any, Any], statblk: stats.Statblock) -> stats.Statb
             elif item["type"] in GITHUB_EVENTS:
                 statblk.projects[item["repo"]["name"]] += 1
 
+            # Count newly created repos
+            if (
+                item["type"] == "CreateEvent"
+                and item["payload"]["ref_type"] == "repository"
+            ):
+                statblk.new_repo_count += 1
+
         log(f"In-progress commit count is at: {statblk.count}", args["verbose"])
 
         if args["extend"]:
@@ -137,10 +144,12 @@ def print_output(statblk: stats.Statblock, extend: bool) -> None:
     print(f"Github interactions: {statblk.count}")
 
     if extend:
-        (most_common_repo,) = statblk.projects.most_common(1)
-        print(f"Most active repo ({most_common_repo[0]}): {most_common_repo[1]}")
-
         print(f"Monthly interactions ({statblk.month_name}): {statblk.month_count}")
+
+        mcr = statblk.get_most_common_repo()
+        print(f"Most active repo ({mcr[0]}): {mcr[1]}")
+
+        print(f"Repos created this year: {statblk.new_repo_count}")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
