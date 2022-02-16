@@ -120,7 +120,10 @@ def count_commits(args: dict[Any, Any], statblk: stats.Statblock) -> stats.Statb
                 statblk.projects[item["repo"]["name"]] += 1
 
             # Count newly created repos
-            if item["type"] == "CreateEvent":
+            if (
+                item["type"] == "CreateEvent"
+                and item["payload"]["ref_type"] == "repository"
+            ):
                 statblk.new_repo_count += 1
 
         log(f"In-progress commit count is at: {statblk.count}", args["verbose"])
