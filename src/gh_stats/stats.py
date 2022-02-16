@@ -13,3 +13,7 @@ class Statblock:
         self.projects = Counter()
 
         self.new_repo_count = 0
+
+    def get_most_common_repo(self):
+        (ret,) = self.projects.most_common(1)
+        return ret

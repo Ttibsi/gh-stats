@@ -141,10 +141,11 @@ def print_output(statblk: stats.Statblock, extend: bool) -> None:
     print(f"Github interactions: {statblk.count}")
 
     if extend:
-        (most_common_repo,) = statblk.projects.most_common(1)
-        print(f"Most active repo ({most_common_repo[0]}): {most_common_repo[1]}")
-
         print(f"Monthly interactions ({statblk.month_name}): {statblk.month_count}")
+
+        mcr = statblk.get_most_common_repo()
+        print(f"Most active repo ({mcr[0]}): {mcr[1]}")
+
         print(f"Repos created this year: {statblk.new_repo_count}")
 
 
