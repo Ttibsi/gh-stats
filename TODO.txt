@@ -1,7 +1,6 @@
 - Visualisation
 - potential visualisation of the github squares?
 
-- count of new repos
 - count of forked/starred repos
 - prettier output
 

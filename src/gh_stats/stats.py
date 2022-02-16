@@ -14,6 +14,6 @@ class Statblock:
 
         self.new_repo_count = 0
 
-    def get_most_common_repo(self):
+    def get_most_common_repo(self) -> tuple[str, int]:
         (ret,) = self.projects.most_common(1)
         return ret
