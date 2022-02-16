@@ -11,3 +11,5 @@ class Statblock:
         self.month_name = ""
 
         self.projects = Counter()
+
+        self.new_repo_count = 0
