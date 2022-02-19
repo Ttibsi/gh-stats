@@ -163,7 +163,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     log(f"Accepted arguments: {args}", args["verbose"])
 
     log("Fetching github username", args["verbose"])
-    statblk.username = get_username()
+
+    if args["username"] == "":
+        statblk.username = get_username()
+    else:
+        statblk.username = args["username"]
+
     log(f"username = {statblk.username}\n", args["verbose"])
 
     if args["extend"]:
