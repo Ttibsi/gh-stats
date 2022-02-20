@@ -1,6 +1,6 @@
-src/gh_stats/__pycache__/
-src/gh_stats/gh_stat.log
-src/gh_stats.egg-info/
+gh_stats/__pycache__/
+gh_stats/gh_stat.log
+gh_stats.egg-info/
 
 test/__pycache__/
 test/gh_stat.log
@@ -8,3 +8,5 @@ test/gh_stat.log
 gh_stat.log
 build/
 .mypy_cache/
+
+*.swp

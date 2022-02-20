@@ -18,7 +18,7 @@ setup(
     package_dir={"": "src"},
     entry_points={
         "console_scripts": [
-            "ghstat = gh_stats.gh_stats:main",
+            "ghstat = gh_stats.ghstat:main",
         ],
     },
 )

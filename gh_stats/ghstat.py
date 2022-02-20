@@ -7,9 +7,10 @@ from collections import Counter
 from typing import Any
 from typing import Sequence
 
-import argparser
 import requests
-import stats
+
+from gh_stats import argparser
+from gh_stats import stats
 
 # https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
 GITHUB_EVENTS = [
@@ -67,7 +68,53 @@ def get_current_month(statblk: stats.Statblock) -> None:
     statblk.month = str(datetime.datetime.now().month).zfill(2)
 
 
-def count_commits(args: dict[Any, Any], statblk: stats.Statblock) -> stats.Statblock:
+def count_commits(item: dict[Any, Any]) -> int:
+    # Get year count
+    if item["type"] == "PushEvent":
+        return item["payload"]["size"]
+    elif item["type"] == "PullRequestEvent":
+        return item["payload"]["pull_request"]["commits"]
+    elif item["type"] in GITHUB_EVENTS:
+        return 1
+    else:
+        return 0
+
+
+def count_monthly(item: dict[Any, Any], month) -> int:
+    if item["created_at"][5:7] == month:
+        if item["type"] == "PushEvent":
+            return int(item["payload"]["size"])
+        elif item["type"] == "PullRequestEvent":
+            return int(item["payload"]["pull_request"]["commits"])
+        elif item["type"] in GITHUB_EVENTS:
+            return 1
+
+    return 0
+
+
+def count_per_repo(item: dict[Any, Any], statblk: stats.Statblock) -> stats.Statblock:
+    # Count commits per repo
+    if item["type"] == "PushEvent":
+        statblk.projects[item["repo"]["name"]] += item["payload"]["size"]
+    elif item["type"] == "PullRequestEvent":
+        statblk.projects[item["repo"]["name"]] += item["payload"]["pull_request"][
+            "commits"
+        ]
+    elif item["type"] in GITHUB_EVENTS:
+        statblk.projects[item["repo"]["name"]] += 1
+
+    return statblk
+
+
+def new_repos(item: dict[Any, Any]) -> int:
+    # Count newly created repos
+    if item["type"] == "CreateEvent" and item["payload"]["ref_type"] == "repository":
+        return 1
+    else:
+        return 0
+
+
+def parse_json(args: dict[Any, Any], statblk: stats.Statblock) -> stats.Statblock:
     """This function needs unit tests"""
     page_count = 1
 
@@ -92,39 +139,10 @@ def count_commits(args: dict[Any, Any], statblk: stats.Statblock) -> stats.Statb
             if item["created_at"][:4] != str(current_year):
                 break
 
-            # Get year count
-            if item["type"] == "PushEvent":
-                statblk.count += item["payload"]["size"]
-            elif item["type"] == "PullRequestEvent":
-                statblk.count += item["payload"]["pull_request"]["commits"]
-            elif item["type"] in GITHUB_EVENTS:
-                statblk.count += 1
-
-            # Get month count
-            if item["created_at"][5:7] == statblk.month:
-                if item["type"] == "PushEvent":
-                    statblk.month_count += item["payload"]["size"]
-                elif item["type"] == "PullRequestEvent":
-                    statblk.month_count += item["payload"]["pull_request"]["commits"]
-                elif item["type"] in GITHUB_EVENTS:
-                    statblk.month_count += 1
-
-            # Count commits per repo
-            if item["type"] == "PushEvent":
-                statblk.projects[item["repo"]["name"]] += item["payload"]["size"]
-            elif item["type"] == "PullRequestEvent":
-                statblk.projects[item["repo"]["name"]] += item["payload"][
-                    "pull_request"
-                ]["commits"]
-            elif item["type"] in GITHUB_EVENTS:
-                statblk.projects[item["repo"]["name"]] += 1
-
-            # Count newly created repos
-            if (
-                item["type"] == "CreateEvent"
-                and item["payload"]["ref_type"] == "repository"
-            ):
-                statblk.new_repo_count += 1
+            statblk.count += count_commits(item)
+            statblk.month_count += count_monthly(item, statblk.month)
+            statblk = count_per_repo(item, statblk)
+            statblk.new_repo_count += new_repos(item)
 
         log(f"In-progress commit count is at: {statblk.count}", args["verbose"])
 
@@ -176,7 +194,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         log("Count commits in year", args["verbose"])
 
-    statblk = count_commits(args, statblk)
+    statblk = parse_json(args, statblk)
     log(f"commit_count={statblk.count}\n", args["verbose"])
 
     print_output(statblk, args["extend"])
