@@ -8,8 +8,9 @@ from typing import Any
 from typing import Sequence
 
 import requests
-from src.gh_stats import argparser
-from src.gh_stats import stats
+
+from gh_stats import argparser
+from gh_stats import stats
 
 # https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
 GITHUB_EVENTS = [
