@@ -27,6 +27,6 @@ def test_count_monthly():
     res = 0
     with open("test_data.json") as f:
         for item in f:
-            res += ghstat.count_monthly(f)
+            res += ghstat.count_monthly(f, "02")
 
     assert res == 30
