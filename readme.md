@@ -12,8 +12,20 @@ $ pip install .
 
 ### Usage
 
-Currently the package has no arguments and will only run with `ghstat`. Other features and flags are coming soon
+Run `ghstat` to trigger the main script. This will tell you your current github contributions (the number of times you've done a `git commit ... git push` to github).
+Add the following flags to expand the script outout
 
+```console
+usage: ghstat.py [-h] [-v] [-f] [-e] [-u USERNAME]
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Verbose output of operations
+  -f, --flags           Display status of all flags for debugging purposes
+  -e, --extend          Show more statistics
+  -u USERNAME, --username USERNAME
+                        Check a specific github account
+```
 
 ### Rationale
 
@@ -22,6 +34,7 @@ I found myself regularly checking my github account's contribution graph to see 
 However, I found myself wanting more granular information that I could get at a glance without leaving the terminal.
 
 Thus, `gh-stats` was born
+
 
 ### How to help
 
