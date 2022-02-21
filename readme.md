@@ -1,6 +1,6 @@
 # gh-stats
 
-Find out infromation about your git commit history with this one simple tool! (eventually)
+Find out infromation about your git commit history with this one simple tool!
 
 ### Installation
 
