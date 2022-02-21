@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from gh_stats import ghstat  # type: ignore
-from gh_stats import stats  # type: ignore
+import gh_stats.ghstat as ghstat  # type: ignore
+import gh_stats.stats as stats  # type: ignore
 
 
 def test_get_username():
