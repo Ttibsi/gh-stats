@@ -4,7 +4,7 @@ from setuptools import setup  # type: ignore
 
 setup(
     name="gh-stats",
-    version="v0.1.0",
+    version="v1.0.0",
     description="Get statistics about your Github commit history",
     author="Ttibsi",
     author_email="ashisbitt@icloud.com",
