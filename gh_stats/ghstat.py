@@ -30,8 +30,8 @@ GITHUB_EVENTS = [
 response_length = 100  # max 100, default 30
 
 
+# Not the fanciest logging, but it works
 def log(msg: str, verbose: bool) -> None:
-    """Not the fanciest logging, but it works"""
     with open("gh_stat.log", "a") as file:
         file.write(msg + "\n")
 
@@ -107,7 +107,6 @@ def count_per_repo(item: dict[Any, Any], statblk: stats.Statblock) -> stats.Stat
 
 
 def new_repos(item: dict[Any, Any]) -> int:
-    # Count newly created repos
     if item["type"] == "CreateEvent" and item["payload"]["ref_type"] == "repository":
         return 1
     else:
@@ -115,7 +114,6 @@ def new_repos(item: dict[Any, Any]) -> int:
 
 
 def parse_json(args: dict[Any, Any], statblk: stats.Statblock) -> stats.Statblock:
-    """This function needs unit tests"""
     page_count = 1
 
     current_year = get_current_year()
