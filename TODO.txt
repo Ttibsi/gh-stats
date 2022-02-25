@@ -3,3 +3,7 @@
     - Rich
 
 - count of forked/starred repos
+
+- Add "listing" to verbose output
+- add `--version`
+- Add today's date to verbose output
