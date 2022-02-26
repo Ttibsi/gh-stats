@@ -1,4 +1,5 @@
 *.pyc
 *.swp
 build/
+gh_stat.log
 *.egg-info/
