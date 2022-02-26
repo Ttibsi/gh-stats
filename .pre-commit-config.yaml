@@ -17,7 +17,6 @@ repos:
     rev: 22.1.0
     hooks:
     -   id: black
-        args: [--target-version=py310]
 -   repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:
@@ -26,4 +25,3 @@ repos:
     rev: v0.931
     hooks:
     -   id: mypy
-        additional_dependencies: [types-all, pytest==6.2.5]
