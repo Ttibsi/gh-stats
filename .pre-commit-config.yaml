@@ -25,3 +25,4 @@ repos:
     rev: v0.931
     hooks:
     -   id: mypy
+        additional_dependancies: [requests>=2.27.1]
