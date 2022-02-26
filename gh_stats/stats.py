@@ -2,7 +2,7 @@ from collections import Counter
 
 
 class Statblock:
-    def __init__(self):
+    def __init__(self) -> None:
         self.username = ""
         self.count = 0
 
@@ -10,7 +10,7 @@ class Statblock:
         self.month = ""  # String so it can hold leading zeros
         self.month_name = ""
 
-        self.projects = Counter()
+        self.projects: Counter[str] = Counter()
 
         self.new_repo_count = 0
 

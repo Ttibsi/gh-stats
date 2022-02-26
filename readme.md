@@ -21,6 +21,7 @@ github contributions (the number of times you've done a
 `git commit ... git push` to github).
 
 ```console
+$ ghstat --help
 usage: ghstat.py [-h] [-v] [-f] [-e] [-u USERNAME]
 
 options:
@@ -48,7 +49,7 @@ Feel free to make any PRs you see fit, or check out the
 [issues page](https://github.com/Ttibsi/gh-stats/issues) or my [TODO](https://github.com/Ttibsi/gh-stats/blob/master/TODO.txt)
 if you're unsure where to start.
 
-Please make use of the [pre-commit](http://pre-commit.com) config file
+Please make use of the [pre-commit](https://pre-commit.com) config file
 attached to automatically format and type check your PRs.
 
 (This will eventually be replaced with automated CI)

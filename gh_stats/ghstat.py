@@ -1,74 +1,52 @@
 #!/usr/bin/env python3
 import argparse
 import datetime
-import os
 import pprint as p
-from collections import Counter
+from collections.abc import Sequence
 from typing import Any
-from typing import Sequence
 
 import requests
 
-from gh_stats import argparser
 from gh_stats import stats
 
 # https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
-GITHUB_EVENTS = [
-    "CommitCommentEvent",  # Commit via GH web ui
-    "CreateEvent",
-    "DeleteEvent",
-    "ForkEvent",
-    "IssueCommentEvent",
-    "IssuesEvent",
-    "PullRequestEvent",
-    "PullRequestReviewEvent",
-    "PullRequestReviewCommentEvent",
-    "ReleaseEvent",  # Make a git release
-    "WatchEvent",  # Star a repo
-]
+GITHUB_EVENTS = frozenset(
+    (
+        "CommitCommentEvent",  # Commit via GH web ui
+        "CreateEvent",
+        "DeleteEvent",
+        "ForkEvent",
+        "IssueCommentEvent",
+        "IssuesEvent",
+        "PullRequestEvent",
+        "PullRequestReviewEvent",
+        "PullRequestReviewCommentEvent",
+        "ReleaseEvent",  # Make a git release
+        "WatchEvent",  # Star a repo
+    )
+)
 
 response_length = 100  # max 100, default 30
 
 
-# Not the fanciest logging, but it works
-def log(msg: str, verbose: bool) -> None:
-    with open("gh_stat.log", "a") as file:
-        file.write(msg + "\n")
-
-    if verbose:
-        print(msg)
-
-
-def get_username() -> str:
-    with open(os.path.expanduser("~/.gitconfig")) as git_file:
-        git_lines = git_file.readlines()
-
-    for line in git_lines:
-        name_line = line.split(" = ") if line.startswith("name") else ""
-
-        if name_line != "":
-            break
-
-    return name_line[1].lower().strip()
-
-
-def make_request(args: dict[Any, Any], user: str, page: int = 1):
-    log(f"Request call to page {page}", args["verbose"])
+def make_request(
+    args: argparse.Namespace, user: str, page: int = 1
+) -> list[dict[str, Any]]:
     return requests.get(
         f"https://api.github.com/users/{user}/events?page={page}&per_page={response_length}"
     ).json()
 
 
 def get_current_year() -> int:
-    return int(datetime.date.today().strftime("%Y"))
+    return datetime.date.today().year
 
 
 def get_current_month(statblk: stats.Statblock) -> None:
     statblk.month_name = datetime.date.today().strftime("%b")
-    statblk.month = str(datetime.datetime.now().month).zfill(2)
+    statblk.month = f"{datetime.datetime.now().month:02}"
 
 
-def count_commits(item: dict[Any, Any]) -> int:
+def count_commits(item: dict[str, Any]) -> int:
     # Get year count
     if item["type"] == "PushEvent":
         return item["payload"]["size"]
@@ -80,7 +58,7 @@ def count_commits(item: dict[Any, Any]) -> int:
         return 0
 
 
-def count_monthly(item: dict[Any, Any], month) -> int:
+def count_monthly(item: dict[str, Any], month: str) -> int:
     if item["created_at"][5:7] == month:
         if item["type"] == "PushEvent":
             return int(item["payload"]["size"])
@@ -92,7 +70,7 @@ def count_monthly(item: dict[Any, Any], month) -> int:
     return 0
 
 
-def count_per_repo(item: dict[Any, Any], statblk: stats.Statblock) -> stats.Statblock:
+def count_per_repo(item: dict[str, Any], statblk: stats.Statblock) -> stats.Statblock:
     # Count commits per repo
     if item["type"] == "PushEvent":
         statblk.projects[item["repo"]["name"]] += item["payload"]["size"]
@@ -106,34 +84,27 @@ def count_per_repo(item: dict[Any, Any], statblk: stats.Statblock) -> stats.Stat
     return statblk
 
 
-def new_repos(item: dict[Any, Any]) -> int:
+def new_repos(item: dict[str, Any]) -> int:
     if item["type"] == "CreateEvent" and item["payload"]["ref_type"] == "repository":
         return 1
     else:
         return 0
 
 
-def parse_json(args: dict[Any, Any], statblk: stats.Statblock) -> stats.Statblock:
+def parse_json(args: argparse.Namespace, statblk: stats.Statblock) -> stats.Statblock:
     page_count = 1
 
     current_year = get_current_year()
-    log(f"Checking year: {current_year}", args["verbose"])
 
     get_current_month(statblk)
-
-    if args["extend"]:
-        log(f"Checking month: {statblk.month}", args["verbose"])
 
     resp = make_request(args, statblk.username)
 
     while (
-        resp[0]["created_at"][:4] == str(current_year)  # type: ignore
-        and len(resp) == response_length  # type: ignore
+        resp[0]["created_at"][:4] == str(current_year) and len(resp) == response_length
     ):
 
-        log(f"Page {page_count} is length {len(resp)}", args["verbose"])
-
-        for item in resp:  # type: ignore
+        for item in resp:
             if item["created_at"][:4] != str(current_year):
                 break
 
@@ -141,14 +112,6 @@ def parse_json(args: dict[Any, Any], statblk: stats.Statblock) -> stats.Statbloc
             statblk.month_count += count_monthly(item, statblk.month)
             statblk = count_per_repo(item, statblk)
             statblk.new_repo_count += new_repos(item)
-
-        log(f"In-progress commit count is at: {statblk.count}", args["verbose"])
-
-        if args["extend"]:
-            log(
-                f"In-progress month count is at: {statblk.month_count}", args["verbose"]
-            )
-            log(f"Commits per repo: \n{statblk.projects}", args["verbose"])
 
         page_count += 1
         resp = make_request(args, statblk.username, page_count)
@@ -169,35 +132,47 @@ def print_output(statblk: stats.Statblock, extend: bool) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    args = argparser.parser(argv)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Verbose output of operations",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "-f",
+        "--flags",
+        help="Display status of all flags for debugging purposes",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "-e",
+        "--extend",
+        help="Show more statistics",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "-u",
+        "--username",
+        help="Check a specific github account",
+        required=True,
+    )
+
+    args: argparse.Namespace = parser.parse_args(argv)
     statblk = stats.Statblock()
 
-    if args["flags"]:
+    if args.flags:
         p.pprint(args)
 
-    log("Starting gh_stats", args["verbose"])
-    log(f"Accepted arguments: {args}", args["verbose"])
-
-    log("Fetching github username", args["verbose"])
-
-    if args["username"] == "":
-        statblk.username = get_username()
-    else:
-        statblk.username = args["username"]
-
-    log(f"username = {statblk.username}\n", args["verbose"])
-
-    if args["extend"]:
-        log("Count extended commits", args["verbose"])
-    else:
-        log("Count commits in year", args["verbose"])
+    statblk.username = args.username
 
     statblk = parse_json(args, statblk)
-    log(f"commit_count={statblk.count}\n", args["verbose"])
+    print_output(statblk, args.extend)
 
-    print_output(statblk, args["extend"])
-
-    log("Closing gh_stats", args["verbose"])
     return 0
 
 

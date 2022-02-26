@@ -1,14 +1,7 @@
 import json
 
-import pytest
-
-import gh_stats.ghstat as ghstat  # type: ignore
-import gh_stats.stats as stats  # type: ignore
-
-
-def test_get_username():
-    """This will only work on my system. This test could be better"""
-    assert ghstat.get_username() == "ttibsi"
+import gh_stats.ghstat as ghstat
+import gh_stats.stats as stats
 
 
 def test_get_current_year():
