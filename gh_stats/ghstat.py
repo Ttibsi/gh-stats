@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import datetime
-import pprint as p
 from collections.abc import Sequence
 from typing import Any
 
@@ -26,14 +25,12 @@ GITHUB_EVENTS = frozenset(
     )
 )
 
-response_length = 100  # max 100, default 30
-
 
 def make_request(
     args: argparse.Namespace, user: str, page: int = 1
 ) -> list[dict[str, Any]]:
     return requests.get(
-        f"https://api.github.com/users/{user}/events?page={page}&per_page={response_length}"
+        f"https://api.github.com/users/{user}/events?page={page}&per_page=100"
     ).json()
 
 
@@ -100,9 +97,7 @@ def parse_json(args: argparse.Namespace, statblk: stats.Statblock) -> stats.Stat
 
     resp = make_request(args, statblk.username)
 
-    while (
-        resp[0]["created_at"][:4] == str(current_year) and len(resp) == response_length
-    ):
+    while resp[0]["created_at"][:4] == str(current_year) and len(resp) == 100:
 
         for item in resp:
             if item["created_at"][:4] != str(current_year):
@@ -135,13 +130,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "-v",
-        "--verbose",
-        help="Verbose output of operations",
-        action="store_true",
-    )
-
-    parser.add_argument(
         "-f",
         "--flags",
         help="Display status of all flags for debugging purposes",
@@ -158,7 +146,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "-u",
         "--username",
-        help="Check a specific github account",
+        help="Specify github username (required)",
         required=True,
     )
 
@@ -166,7 +154,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     statblk = stats.Statblock()
 
     if args.flags:
-        p.pprint(args)
+        print(vars(args))
 
     statblk.username = args.username
 
