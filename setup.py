@@ -18,7 +18,7 @@ setup(
     ),
     entry_points={
         "console_scripts": [
-            "ghstat = gh_stats.ghstat:main",
+            "ghstats = gh_stats.ghstats:main",
         ],
     },
 )
