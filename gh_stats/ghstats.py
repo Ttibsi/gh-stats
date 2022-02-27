@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 import datetime
+from collections import Counter
 from collections.abc import Sequence
 from typing import Any
 
 import requests
-
-from gh_stats import stats
 
 # https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
 GITHUB_EVENTS = frozenset(
@@ -34,13 +33,9 @@ def make_request(
     ).json()
 
 
-def get_current_year() -> int:
-    return datetime.date.today().year
-
-
-def get_current_month(statblk: stats.Statblock) -> None:
-    statblk.month_name = datetime.date.today().strftime("%b")
-    statblk.month = f"{datetime.datetime.now().month:02}"
+def get_current_month() -> tuple[str, str]:
+    today = datetime.date.today()
+    return (today.strftime("%b"), f"{today.month:02}")
 
 
 def count_commits(item: dict[str, Any]) -> int:
@@ -67,18 +62,18 @@ def count_monthly(item: dict[str, Any], month: str) -> int:
     return 0
 
 
-def count_per_repo(item: dict[str, Any], statblk: stats.Statblock) -> stats.Statblock:
+def count_per_repo(item: dict[str, Any]) -> Counter[str]:
     # Count commits per repo
-    if item["type"] == "PushEvent":
-        statblk.projects[item["repo"]["name"]] += item["payload"]["size"]
-    elif item["type"] == "PullRequestEvent":
-        statblk.projects[item["repo"]["name"]] += item["payload"]["pull_request"][
-            "commits"
-        ]
-    elif item["type"] in GITHUB_EVENTS:
-        statblk.projects[item["repo"]["name"]] += 1
+    repo_counter: Counter[str] = Counter()
 
-    return statblk
+    if item["type"] == "PushEvent":
+        repo_counter[item["repo"]["name"]] += item["payload"]["size"]
+    elif item["type"] == "PullRequestEvent":
+        repo_counter[item["repo"]["name"]] += item["payload"]["pull_request"]["commits"]
+    elif item["type"] in GITHUB_EVENTS:
+        repo_counter[item["repo"]["name"]] += 1
+
+    return repo_counter
 
 
 def new_repos(item: dict[str, Any]) -> int:
@@ -88,14 +83,23 @@ def new_repos(item: dict[str, Any]) -> int:
         return 0
 
 
-def parse_json(args: argparse.Namespace, statblk: stats.Statblock) -> stats.Statblock:
+def parse_json(args: argparse.Namespace) -> dict[str, Any]:
     page_count = 1
+    statblock: dict[str, Any] = {
+        "username": args.username,
+        "count": 0,
+        "month_count": 0,
+        "month": "",
+        "month_name": "",
+        "projects": Counter(),
+        "new_repo_count": 0,
+    }
 
-    current_year = get_current_year()
+    current_year = datetime.date.today().year
 
-    get_current_month(statblk)
+    statblock["month"], statblock["month_name"] = get_current_month()
 
-    resp = make_request(args, statblk.username)
+    resp = make_request(args, statblock["username"])
 
     while resp[0]["created_at"][:4] == str(current_year) and len(resp) == 100:
 
@@ -103,27 +107,29 @@ def parse_json(args: argparse.Namespace, statblk: stats.Statblock) -> stats.Stat
             if item["created_at"][:4] != str(current_year):
                 break
 
-            statblk.count += count_commits(item)
-            statblk.month_count += count_monthly(item, statblk.month)
-            statblk = count_per_repo(item, statblk)
-            statblk.new_repo_count += new_repos(item)
+            statblock["count"] += count_commits(item)
+            statblock["month_count"] += count_monthly(item, statblock["month"])
+            statblock["projects"] += count_per_repo(item)
+            statblock["new_repo_count"] += new_repos(item)
 
         page_count += 1
-        resp = make_request(args, statblk.username, page_count)
+        resp = make_request(args, statblock["username"], page_count)
 
-    return statblk
+    return statblock
 
 
-def print_output(statblk: stats.Statblock, extend: bool) -> None:
-    print(f"Github interactions: {statblk.count}")
+def print_output(statblock: dict[str, Any], extend: bool) -> None:
+    print(f"Github interactions: {statblock['count']}")
 
     if extend:
-        print(f"Monthly interactions ({statblk.month_name}): {statblk.month_count}")
+        print(
+            f"Monthly interactions ({statblock['month_name']}): {statblock['month_count']}"
+        )
 
-        mcr = statblk.get_most_common_repo()
+        (mcr,) = statblock["projects"].most_common(1)
         print(f"Most active repo ({mcr[0]}): {mcr[1]}")
 
-        print(f"Repos created this year: {statblk.new_repo_count}")
+        print(f"Repos created this year: {statblock['new_repo_count']}")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -151,15 +157,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
 
     args: argparse.Namespace = parser.parse_args(argv)
-    statblk = stats.Statblock()
 
     if args.flags:
         print(vars(args))
 
-    statblk.username = args.username
-
-    statblk = parse_json(args, statblk)
-    print_output(statblk, args.extend)
+    statblock = parse_json(args)
+    print_output(statblock, args.extend)
 
     return 0
 
