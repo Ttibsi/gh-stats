@@ -1,19 +1,15 @@
 import json
+from collections import Counter
 
-import pytest
+import freezegun
 
-import gh_stats.ghstat as ghstat  # type: ignore
-import gh_stats.stats as stats  # type: ignore
-
-
-def test_get_username():
-    """This will only work on my system. This test could be better"""
-    assert ghstat.get_username() == "ttibsi"
+import gh_stats.ghstats as ghstat
 
 
-def test_get_current_year():
-    """Is there a future proof way to test this?"""
-    assert ghstat.get_current_year() == 2022
+@freezegun.freeze_time("2022-02-12")
+def test_get_current_month():
+    expected = ("Feb", "02")
+    assert ghstat.get_current_month() == expected
 
 
 def test_count_commits():
@@ -39,7 +35,7 @@ def test_count_monthly():
 
 
 def test_count_per_repo():
-    test = stats.Statblock()
+    test_stats: dict[str, Counter[str]] = {"projects": Counter()}
     test_counter = {
         "Ttibsi/gh-stats": 54,
         "Ttibsi/AdventOfCode2021": 13,
@@ -52,9 +48,9 @@ def test_count_per_repo():
         obj = json.load(f)
 
     for item in obj:
-        test = ghstat.count_per_repo(item, test)
+        test_stats["projects"] += ghstat.count_per_repo(item)
 
-    assert test.projects == test_counter
+    assert test_stats["projects"] == test_counter
 
 
 def test_new_repos():

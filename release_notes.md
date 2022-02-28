@@ -1,8 +1,6 @@
-Release Notes
-============
+# Release Notes
 
-v1.0.0
------
+### v1.0.0
 
 * Verbose mode
 * Flag to check another github user
@@ -10,7 +8,7 @@ v1.0.0
     * Commits per month
     * Most popular repo
 
-v0.1.0
-------
+### v0.1.0
+
 * Initial release
 * Run `ghstat` after installing to see your current count of commits this year
