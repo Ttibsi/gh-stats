@@ -100,7 +100,7 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
 
     current_year = datetime.date.today().year
 
-    statblock["month"], statblock["month_name"] = get_current_month()
+    statblock["month_name"], statblock["month"] = get_current_month()
 
     resp = make_request(args, statblock["username"])
 
