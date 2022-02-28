@@ -51,7 +51,10 @@ def count_commits(item: dict[str, Any]) -> int:
 
 
 def count_monthly(item: dict[str, Any], month: str) -> int:
-    if item["created_at"][5:7] == month:
+    commit_date = item["created_at"]
+    month_obj = datetime.datetime.strptime(commit_date, "%Y-%m-%dT%H:%M:%SZ").month
+
+    if datetime.datetime.today().month == month_obj:
         if item["type"] == "PushEvent":
             return int(item["payload"]["size"])
         elif item["type"] == "PullRequestEvent":
