@@ -6,4 +6,3 @@
 
 - Add "listing" to verbose output
 - add `--version`
-- Add today's date to verbose output
