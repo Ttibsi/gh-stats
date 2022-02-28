@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import datetime
+import subprocess
 from collections import Counter
 from collections.abc import Sequence
 from typing import Any
@@ -23,6 +24,11 @@ GITHUB_EVENTS = frozenset(
         "WatchEvent",  # Star a repo
     )
 )
+
+
+def output_version() -> str:
+    ver = subprocess.check_output(("git", "describe", "--abbrev=0"))
+    return f"Current version: {ver.strip().decode('utf-8')}"
 
 
 def make_request(
@@ -48,6 +54,21 @@ def count_commits(item: dict[str, Any]) -> int:
         return 1
     else:
         return 0
+
+
+def count_today(item: dict[str, Any]) -> int:
+    commit_date = item["created_at"]
+    date_obj = datetime.datetime.strptime(commit_date, "%Y-%m-%dT%H:%M:%SZ").date()
+
+    if datetime.date.today() == date_obj:
+        if item["type"] == "PushEvent":
+            return int(item["payload"]["size"])
+        elif item["type"] == "PullRequestEvent":
+            return int(item["payload"]["pull_request"]["commits"])
+        elif item["type"] in GITHUB_EVENTS:
+            return 1
+
+    return 0
 
 
 def count_monthly(item: dict[str, Any], month: str) -> int:
@@ -90,6 +111,7 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
     page_count = 1
     statblock: dict[str, Any] = {
         "username": args.username,
+        "daily": 0,
         "count": 0,
         "month_count": 0,
         "month": "",
@@ -111,6 +133,7 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
                 break
 
             statblock["count"] += count_commits(item)
+            statblock["daily"] += count_today(item)
             statblock["month_count"] += count_monthly(item, statblock["month"])
             statblock["projects"] += count_per_repo(item)
             statblock["new_repo_count"] += new_repos(item)
@@ -123,8 +146,8 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
 
 def print_output(statblock: dict[str, Any], extend: bool) -> None:
     print(f"====== {datetime.date.today()} ======")
+    print(f"Daily interactions: {statblock['daily']}")
     print(f"Total interactions: {statblock['count']}")
-    # Interactions today:
     # Interactions per repo today
 
     if extend:
@@ -155,14 +178,25 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
     )
 
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument(
         "-u",
         "--username",
         help="Specify github username (required)",
-        required=True,
+    )
+
+    group.add_argument(
+        "--version",
+        help="Output current version",
+        action="store_true",
     )
 
     args: argparse.Namespace = parser.parse_args(argv)
+
+    if args.version:
+        print(output_version())
+        return 0
 
     if args.flags:
         print(vars(args))
