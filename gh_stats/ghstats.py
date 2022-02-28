@@ -122,7 +122,7 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def print_output(statblock: dict[str, Any], extend: bool) -> None:
-    print(f"===== {datetime.date.today()} =====")
+    print(f"====== {datetime.date.today()} ======")
     print(f"Total interactions: {statblock['count']}")
     # Interactions today:
     # Interactions per repo today
