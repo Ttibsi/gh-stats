@@ -46,11 +46,8 @@ def parse_header(lnk: str | None) -> dict[str, str]:
     return ret
 
 
-def make_request(user: str, page: int = 1) -> Response:
-    req = requests.get(
-        f"https://api.github.com/users/{user}/events?page={page}&per_page=100"
-    )
-
+def make_request(url: str) -> Response:
+    req = requests.get(f"{url}?per_page=100")
     return Response(req.json(), parse_header(req.headers["link"]))
 
 
@@ -140,10 +137,10 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
     }
 
     statblock["month_name"], statblock["month"] = get_current_month()
+    starting_url = "https://api.github.com/user/{statblock['username']}/events"
+    resp = make_request(starting_url)
 
     while True:
-        resp = make_request(statblock["username"])
-
         for item in resp.json:
             item_date = item["created_at"]
             date_obj = datetime.datetime.strptime(
@@ -169,6 +166,8 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
             ):
 
                 statblock["daily"] += count_today(item)
+
+        resp = make_request(resp.links["next"])
 
     return statblock
 
