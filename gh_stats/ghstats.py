@@ -5,6 +5,7 @@ import subprocess
 from collections import Counter
 from collections.abc import Sequence
 from typing import Any
+from typing import NamedTuple
 
 import requests
 
@@ -26,17 +27,36 @@ GITHUB_EVENTS = frozenset(
 )
 
 
+class Response(NamedTuple):
+    json: Any
+    links: dict[str, str]
+
+
+def parse_header(lnk: str | None) -> dict[str, str]:
+    if lnk is None:
+        return {}
+
+    ret = {}
+    parts = lnk.split(",")
+    for part in parts:
+        link, rel = part.split(";")
+        rel = rel.strip()[len('rel="') : -1]
+        ret[rel] = link[1:-1].strip()
+
+    return ret
+
+
+def make_request(user: str, page: int = 1) -> Response:
+    req = requests.get(
+        f"https://api.github.com/users/{user}/events?page={page}&per_page=100"
+    )
+
+    return Response(req.json(), parse_header(req.headers["link"]))
+
+
 def output_version() -> str:
     ver = subprocess.check_output(("git", "describe", "--abbrev=0"))
     return f"Current version: {ver.strip().decode('utf-8')}"
-
-
-def make_request(
-    args: argparse.Namespace, user: str, page: int = 1
-) -> list[dict[str, Any]]:
-    return requests.get(
-        f"https://api.github.com/users/{user}/events?page={page}&per_page=100"
-    ).json()
 
 
 def get_current_month() -> tuple[str, str]:
@@ -108,7 +128,6 @@ def new_repos(item: dict[str, Any]) -> int:
 
 
 def parse_json(args: argparse.Namespace) -> dict[str, Any]:
-    page_count = 1
     statblock: dict[str, Any] = {
         "username": args.username,
         "daily": 0,
@@ -121,10 +140,17 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
     }
 
     current_year = datetime.date.today().year
-
     statblock["month_name"], statblock["month"] = get_current_month()
 
-    resp = make_request(args, statblock["username"])
+    resp = make_request(statblock["username"])
+
+    # while true
+    # get resp, check each item, parse it
+
+    # daily and monthly checks in IF statements
+
+    # break if item's year isn't equal to today's year
+    # else go to the next response
 
     while resp[0]["created_at"][:4] == str(current_year) and len(resp) == 100:
 
@@ -138,8 +164,7 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
             statblock["projects"] += count_per_repo(item)
             statblock["new_repo_count"] += new_repos(item)
 
-        page_count += 1
-        resp = make_request(args, statblock["username"], page_count)
+        resp = make_request(statblock["username"])
 
     return statblock
 
