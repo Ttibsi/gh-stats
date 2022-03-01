@@ -12,8 +12,8 @@ import requests
 GITHUB_EVENTS = frozenset(
     (
         "CommitCommentEvent",  # Commit via GH web ui
-        "CreateEvent",
-        "DeleteEvent",
+        "CreateEvent",  # Create branch or tag
+        "DeleteEvent",  # Delete branch or tag
         "ForkEvent",
         "IssueCommentEvent",
         "IssuesEvent",

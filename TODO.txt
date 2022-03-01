@@ -4,6 +4,8 @@
 
 - count of forked/starred repos
 
-- Add "listing" to verbose output
 - continuous streak
 - minimise amount of work
+
+verbose mode
+    - list every event type for today plus the repo it's going to
