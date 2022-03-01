@@ -5,3 +5,5 @@
 - count of forked/starred repos
 
 - Add "listing" to verbose output
+- continuous streak
+- minimise amount of work
