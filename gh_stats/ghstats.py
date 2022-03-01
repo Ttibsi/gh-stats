@@ -139,32 +139,36 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
         "new_repo_count": 0,
     }
 
-    current_year = datetime.date.today().year
     statblock["month_name"], statblock["month"] = get_current_month()
 
-    resp = make_request(statblock["username"])
+    while True:
+        resp = make_request(statblock["username"])
 
-    # while true
-    # get resp, check each item, parse it
+        for item in resp.json:
+            item_date = item["created_at"]
+            date_obj = datetime.datetime.strptime(
+                item_date, "%Y-%m-%dT%H:%M:%SZ"
+            ).date()
 
-    # daily and monthly checks in IF statements
-
-    # break if item's year isn't equal to today's year
-    # else go to the next response
-
-    while resp[0]["created_at"][:4] == str(current_year) and len(resp) == 100:
-
-        for item in resp:
-            if item["created_at"][:4] != str(current_year):
+            if datetime.date.today().year != date_obj.year:
                 break
 
+            # Checks through the year
             statblock["count"] += count_commits(item)
-            statblock["daily"] += count_today(item)
-            statblock["month_count"] += count_monthly(item, statblock["month"])
             statblock["projects"] += count_per_repo(item)
             statblock["new_repo_count"] += new_repos(item)
 
-        resp = make_request(statblock["username"])
+            # Checks through the month
+            if datetime.date.today().month == date_obj.month:
+                statblock["month_count"] += count_monthly(item, statblock["month"])
+
+            # Checks through the current day
+            if (
+                datetime.date.today().month == date_obj.month
+                and datetime.date.today().day == date_obj.day
+            ):
+
+                statblock["daily"] += count_today(item)
 
     return statblock
 
