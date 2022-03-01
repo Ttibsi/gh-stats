@@ -1,5 +1,11 @@
 # Release Notes
 
+### v1.0.1
+
+* Rewrote most of the codebase for better functionality
+* `-u` is now a required argument
+* added `--version` command
+
 ### v1.0.0
 
 * Verbose mode
