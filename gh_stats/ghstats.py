@@ -74,19 +74,21 @@ def count_commits(item: dict[str, Any]) -> int:
         return 0
 
 
-def count_today(item: dict[str, Any]) -> int:
-    commit_date = item["created_at"]
-    date_obj = datetime.datetime.strptime(commit_date, "%Y-%m-%dT%H:%M:%SZ").date()
+def count_today(item: dict[str, Any]) -> tuple[int, Counter[str]]:
+    daily_counter: Counter[str] = Counter()
+    int_ret = 0
 
-    if datetime.date.today() == date_obj:
-        if item["type"] == "PushEvent":
-            return int(item["payload"]["size"])
-        elif item["type"] == "PullRequestEvent":
-            return int(item["payload"]["pull_request"]["commits"])
-        elif item["type"] in GITHUB_EVENTS:
-            return 1
+    if item["type"] == "PushEvent":
+        int_ret = int(item["payload"]["size"])
+        daily_counter[item["repo"]["name"]] += int_ret
+    elif item["type"] == "PullRequestEvent":
+        int_ret = int(item["payload"]["pull_request"]["commits"])
+        daily_counter[item["repo"]["name"]] += int_ret
+    elif item["type"] in GITHUB_EVENTS:
+        int_ret = 1
+        daily_counter[item["repo"]["name"]] += int_ret
 
-    return 0
+    return int_ret, daily_counter
 
 
 def count_monthly(item: dict[str, Any], month: str) -> int:
@@ -129,6 +131,7 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
     statblock: dict[str, Any] = {
         "username": args.username,
         "daily": 0,
+        "daily_projects": Counter(),
         "count": 0,
         "month_count": 0,
         "month": "",
@@ -166,7 +169,9 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
                 and datetime.date.today().day == date_obj.day
             ):
 
-                statblock["daily"] += count_today(item)
+                daily, projects = count_today(item)
+                statblock["daily"] += daily
+                statblock["daily_projects"] += projects
 
         try:
             resp = make_request(resp.links["next"])
@@ -179,6 +184,10 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
 def print_output(statblock: dict[str, Any], extend: bool) -> None:
     print(f"====== {datetime.date.today()} ======")
     print(f"Daily interactions: {statblock['daily']}")
+
+    for k, v in dict(statblock["daily_projects"]).items():
+        print(f"    - {k} : {v}")
+
     print(f"Total interactions: {statblock['count']}")
     # Interactions per repo today
 
