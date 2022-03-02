@@ -41,14 +41,15 @@ def parse_header(lnk: str | None) -> dict[str, str]:
     for part in parts:
         link, rel = part.split(";")
         rel = rel.strip()[len('rel="') : -1]
-        ret[rel] = link[1:-1].strip()
+        ret[rel] = link.strip()[1:-1]
 
     return ret
 
 
 def make_request(url: str) -> Response:
-    req = requests.get(f"{url}?per_page=100")
-    return Response(req.json(), parse_header(req.headers["link"]))
+    req = requests.get(url)
+    lnk = req.headers.get("link")
+    return Response(req.json(), parse_header(lnk))
 
 
 def output_version() -> str:
@@ -137,7 +138,7 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
     }
 
     statblock["month_name"], statblock["month"] = get_current_month()
-    starting_url = "https://api.github.com/user/{statblock['username']}/events"
+    starting_url = f"https://api.github.com/users/{statblock['username']}/events"
     resp = make_request(starting_url)
 
     while True:
@@ -167,7 +168,10 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
 
                 statblock["daily"] += count_today(item)
 
-        resp = make_request(resp.links["next"])
+        try:
+            resp = make_request(resp.links["next"])
+        except KeyError:
+            break
 
     return statblock
 
