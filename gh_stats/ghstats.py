@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import datetime
+import os
 import subprocess
 from collections import Counter
 from collections.abc import Sequence
@@ -8,6 +9,7 @@ from typing import Any
 from typing import NamedTuple
 
 import requests
+from pyinputplus import inputYesNo
 
 # https://docs.github.com/en/developers/webhooks-and-events/events/github-event-types
 GITHUB_EVENTS = frozenset(
@@ -202,6 +204,21 @@ def print_output(statblock: dict[str, Any], extend: bool) -> None:
         print(f"Repos created this year: {statblock['new_repo_count']}")
 
 
+def add_token_config(tkn: str) -> None:
+    file_path = os.path.abspath("~/.config/gh_stats/GITHUB_TOKEN")
+
+    if os.path.exists(file_path):
+        validate = inputYesNo("Removing previous token. Continue?")
+        if validate:
+            os.remove(file_path)
+        else:
+            print("Aborting...")
+            return
+
+    with open(file_path, "w") as tkn_file:
+        tkn_file.write(tkn)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
 
@@ -224,7 +241,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     group.add_argument(
         "-u",
         "--username",
-        help="Specify github username (required)",
+        help="Specify github username",
     )
 
     group.add_argument(
@@ -233,14 +250,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
     )
 
+    group.add_argument(
+        "--add_token",
+        help="Add github api token",
+        action="store_true",
+    )
+
     args: argparse.Namespace = parser.parse_args(argv)
 
     if args.version:
         print(output_version())
         return 0
+    elif args.add_token:
+        add_token_config(args.add_token)
+        print("Token accepted")
+        return 0
 
     if args.flags:
         print(vars(args))
+
+    if not os.path.exists("~/.config/gh_stats/GITHUB_TOKEN"):
+        print("No oauth token found - see README for details")
 
     statblock = parse_json(args)
     print_output(statblock, args.extend)
