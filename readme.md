@@ -21,6 +21,13 @@ current github contributions (the number of times you've done a
 `git commit ... git push` to github). The username need to be specified each time - we
 recommend you set up a shell alias if you plan to use this regularly
 
+For more accurate reading, you'll want to add a github oauth token. Go to
+[this](https://github.com/settings/tokens/new) link to get your token, and make sure `repo` is ticked. Then run
+`ghstats --add_token <TOKEN>` to add it to the app. If it times out or needs
+regenerating, simply follow these instructions again. This token is written to
+`~/.config/gh_stats/GITHUB_TOKEN`
+
+
 See `ghstats --help` for more
 
 ### Rationale
