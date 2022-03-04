@@ -210,7 +210,9 @@ def print_output(statblock: dict[str, Any], extend: bool) -> None:
 
 
 def add_token_config(tkn: str) -> None:
-    file_path = os.path.abspath("~/.config/gh_stats/GITHUB_TOKEN")
+    if not os.path.exists(os.path.expanduser("~/.config/gh_stats")):
+        os.mkdir(os.path.expanduser("~/.config/gh_stats/"))
+    file_path = os.path.expanduser("~/.config/gh_stats/GITHUB_TOKEN")
 
     if os.path.exists(file_path):
         validate = inputYesNo("Removing previous token. Continue?")
@@ -258,7 +260,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     group.add_argument(
         "--add_token",
         help="Add github api token",
-        action="store_true",
     )
 
     args: argparse.Namespace = parser.parse_args(argv)
