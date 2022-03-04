@@ -48,8 +48,12 @@ def parse_header(lnk: str | None) -> dict[str, str]:
     return ret
 
 
-def make_request(url: str) -> Response:
-    req = requests.get(url)
+def make_request(url: str, TOKEN: str | None = None) -> Response:
+    if TOKEN:
+        req = requests.get(url, headers={"Authorization": TOKEN})
+    else:
+        req = requests.get(url)
+
     lnk = req.headers.get("link")
     return Response(req.json(), parse_header(lnk))
 
@@ -129,7 +133,7 @@ def new_repos(item: dict[str, Any]) -> int:
         return 0
 
 
-def parse_json(args: argparse.Namespace) -> dict[str, Any]:
+def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, Any]:
     statblock: dict[str, Any] = {
         "username": args.username,
         "daily": 0,
@@ -144,7 +148,8 @@ def parse_json(args: argparse.Namespace) -> dict[str, Any]:
 
     statblock["month_name"], statblock["month"] = get_current_month()
     starting_url = f"https://api.github.com/users/{statblock['username']}/events"
-    resp = make_request(starting_url)
+
+    resp = make_request(starting_url, TOKEN)
 
     while True:
         for item in resp.json:
@@ -271,8 +276,12 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if not os.path.exists("~/.config/gh_stats/GITHUB_TOKEN"):
         print("No oauth token found - see README for details")
+        TOKEN = None
+    else:
+        with open("~/.config/gh_stats/GITHUB_TOKEN") as f:
+            TOKEN = f.read()
 
-    statblock = parse_json(args)
+    statblock = parse_json(args, TOKEN)
     print_output(statblock, args.extend)
 
     return 0
