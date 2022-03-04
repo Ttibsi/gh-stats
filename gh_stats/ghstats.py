@@ -275,11 +275,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.flags:
         print(vars(args))
 
-    if not os.path.exists("~/.config/gh_stats/GITHUB_TOKEN"):
+    file_path = os.path.expanduser("~/.config/gh_stats/GITHUB_TOKEN")
+    if not os.path.exists(file_path):
         print("No oauth token found - see README for details")
         TOKEN = None
     else:
-        with open("~/.config/gh_stats/GITHUB_TOKEN") as f:
+        with open(file_path) as f:
             TOKEN = f.read()
 
     statblock = parse_json(args, TOKEN)
