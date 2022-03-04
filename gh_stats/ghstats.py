@@ -48,7 +48,7 @@ def parse_header(lnk: str | None) -> dict[str, str]:
     return ret
 
 
-def make_request(url: str, TOKEN: str | None = None) -> Response:
+def make_request(url: str, TOKEN: str | None) -> Response:
     if TOKEN:
         req = requests.get(url, headers={"Authorization": TOKEN})
     else:
@@ -181,7 +181,7 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
                 statblock["daily_projects"] += projects
 
         try:
-            resp = make_request(resp.links["next"])
+            resp = make_request(resp.links["next"], TOKEN)
         except KeyError:
             break
 
@@ -193,7 +193,7 @@ def print_output(statblock: dict[str, Any], extend: bool) -> None:
     print(f"Daily interactions: {statblock['daily']}")
 
     for k, v in dict(statblock["daily_projects"]).items():
-        print(f"    - {k} : {v}")
+        print(f" - {k} : {v}")
 
     print(f"Total interactions: {statblock['count']}")
     # Interactions per repo today
