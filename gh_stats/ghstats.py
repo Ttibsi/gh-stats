@@ -200,7 +200,7 @@ def print_output(statblock: dict[str, Any], extend: bool) -> None:
 
     if extend:
         print(
-            f"Monthly interactions ({statblock['month_name']}): {statblock['month_count']}"
+            f"\nMonthly interactions ({statblock['month_name']}): {statblock['month_count']}"
         )
 
         (mcr,) = statblock["projects"].most_common(1)
