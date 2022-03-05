@@ -2,6 +2,8 @@
 
 Find out infromation about your git commit history with this one simple tool!
 
+![Example output](https://raw.githubusercontent.com/Ttibsi/gh-stats/master/screenshots/ExampleOutput.png)
+
 ### Installation
 
 ```console
