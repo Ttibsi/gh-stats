@@ -139,7 +139,7 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
         "daily": 0,
         "daily_projects": Counter(),
         "count": 0,
-        "events_list": [],
+        "events_list": Counter(),
         "month_count": 0,
         "month": "",
         "month_name": "",
@@ -188,7 +188,7 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
                 daily, projects = count_today(item)
                 statblock["daily"] += daily
                 statblock["daily_projects"] += projects
-                statblock["events_list"].append(item["type"])
+                statblock["events_list"][item["type"]] += 1
 
         try:
             resp = make_request(resp.links["next"], TOKEN)
@@ -220,8 +220,8 @@ def print_output(statblock: dict[str, Any], args: argparse.Namespace) -> None:
 
     if args.verbose and len(statblock["events_list"]) > 0:
         print("\n===== Events Found =====")
-        for event in statblock["events_list"]:
-            print(event)
+        for event, count in dict(statblock["events_list"]).items():
+            print(f"{event}: {count}")
 
 
 def add_token_config(tkn: str) -> None:
