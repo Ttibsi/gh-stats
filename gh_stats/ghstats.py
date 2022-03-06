@@ -154,7 +154,15 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
 
     while True:
         for item in resp.json:
-            item_date = item["created_at"]
+            try:
+                item_date = item["created_at"]
+            except TypeError:
+                # Github api has timed out
+                print(
+                    "You are making too many requests too quickly. Please wait and try again"
+                )
+                raise SystemExit(0)
+
             date_obj = datetime.datetime.strptime(
                 item_date, "%Y-%m-%dT%H:%M:%SZ"
             ).date()
@@ -211,9 +219,9 @@ def print_output(statblock: dict[str, Any], args: argparse.Namespace) -> None:
         print(f"Repos created this year: {statblock['new_repo_count']}")
 
     if args.verbose and len(statblock["events_list"]) > 0:
-        print("\n")
+        print("\n===== Events Found =====")
         for event in statblock["events_list"]:
-            print()
+            print(event)
 
 
 def add_token_config(tkn: str) -> None:
