@@ -139,6 +139,7 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
         "daily": 0,
         "daily_projects": Counter(),
         "count": 0,
+        "events_list": [],
         "month_count": 0,
         "month": "",
         "month_name": "",
@@ -179,6 +180,7 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
                 daily, projects = count_today(item)
                 statblock["daily"] += daily
                 statblock["daily_projects"] += projects
+                statblock["events_list"].append(item["type"])
 
         try:
             resp = make_request(resp.links["next"], TOKEN)
@@ -188,7 +190,7 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
     return statblock
 
 
-def print_output(statblock: dict[str, Any], extend: bool) -> None:
+def print_output(statblock: dict[str, Any], args: argparse.Namespace) -> None:
     print(f"====== {datetime.date.today()} ======")
     print(f"Daily interactions: {statblock['daily']}")
 
@@ -198,7 +200,7 @@ def print_output(statblock: dict[str, Any], extend: bool) -> None:
     print(f"Total interactions: {statblock['count']}")
     # Interactions per repo today
 
-    if extend:
+    if args.extend:
         print(
             f"\nMonthly interactions ({statblock['month_name']}): {statblock['month_count']}"
         )
@@ -207,6 +209,11 @@ def print_output(statblock: dict[str, Any], extend: bool) -> None:
         print(f"Most active repo ({mcr[0]}): {mcr[1]}")
 
         print(f"Repos created this year: {statblock['new_repo_count']}")
+
+    if args.verbose and len(statblock["events_list"]) > 0:
+        print("\n")
+        for event in statblock["events_list"]:
+            print()
 
 
 def add_token_config(tkn: str) -> None:
@@ -240,6 +247,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         "-e",
         "--extend",
         help="Show more statistics",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Display all event types.",
         action="store_true",
     )
 
@@ -284,7 +298,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             TOKEN = f.read()
 
     statblock = parse_json(args, TOKEN)
-    print_output(statblock, args.extend)
+    print_output(statblock, args)
 
     return 0
 
