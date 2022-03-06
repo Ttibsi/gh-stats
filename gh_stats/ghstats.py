@@ -97,7 +97,7 @@ def count_today(item: dict[str, Any]) -> tuple[int, Counter[str]]:
     return int_ret, daily_counter
 
 
-def count_monthly(item: dict[str, Any], month: str) -> int:
+def count_monthly(item: dict[str, Any]) -> int:
     commit_date = item["created_at"]
     month_obj = datetime.datetime.strptime(commit_date, "%Y-%m-%dT%H:%M:%SZ").month
 
@@ -177,7 +177,7 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
 
             # Checks through the month
             if datetime.date.today().month == date_obj.month:
-                statblock["month_count"] += count_monthly(item, statblock["month"])
+                statblock["month_count"] += count_monthly(item)
 
             # Checks through the current day
             if (
