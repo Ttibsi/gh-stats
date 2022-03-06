@@ -23,13 +23,14 @@ def test_count_commits():
     assert ret == 72
 
 
+@freezegun.freeze_time("2022-02-28")
 def test_count_monthly():
     ret = 0
     with open("test_data.json") as f:
         obj = json.load(f)
 
     for item in obj:
-        ret += ghstat.count_monthly(item, "02")
+        ret += ghstat.count_monthly(item)
 
     assert ret == 72
 
