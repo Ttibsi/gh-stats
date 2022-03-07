@@ -3,3 +3,4 @@
 build/
 gh_stat.log
 *.egg-info/
+.DS_Store
