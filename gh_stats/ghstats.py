@@ -82,7 +82,6 @@ def count_commits(item: dict[str, Any]) -> int:
 
 def count_today(item: dict[str, Any]) -> tuple[int, Counter[str]]:
     daily_counter: Counter[str] = Counter()
-    int_ret = 0
 
     if item["type"] == "PushEvent":
         int_ret = int(item["payload"]["size"])
@@ -162,6 +161,8 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
                     "You are making too many requests too quickly. Please wait and try again"
                 )
                 raise SystemExit(0)
+
+            print(item["type"])
 
             date_obj = datetime.datetime.strptime(
                 item_date, "%Y-%m-%dT%H:%M:%SZ"
