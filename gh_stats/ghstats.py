@@ -82,7 +82,6 @@ def count_commits(item: dict[str, Any]) -> int:
 
 def count_today(item: dict[str, Any]) -> tuple[int, Counter[str]]:
     daily_counter: Counter[str] = Counter()
-    int_ret = 0
 
     if item["type"] == "PushEvent":
         int_ret = int(item["payload"]["size"])
@@ -97,7 +96,7 @@ def count_today(item: dict[str, Any]) -> tuple[int, Counter[str]]:
     return int_ret, daily_counter
 
 
-def count_monthly(item: dict[str, Any], month: str) -> int:
+def count_monthly(item: dict[str, Any]) -> int:
     commit_date = item["created_at"]
     month_obj = datetime.datetime.strptime(commit_date, "%Y-%m-%dT%H:%M:%SZ").month
 
@@ -139,6 +138,7 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
         "daily": 0,
         "daily_projects": Counter(),
         "count": 0,
+        "events_list": Counter(),
         "month_count": 0,
         "month": "",
         "month_name": "",
@@ -153,7 +153,15 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
 
     while True:
         for item in resp.json:
-            item_date = item["created_at"]
+            try:
+                item_date = item["created_at"]
+            except TypeError:
+                # Github api has timed out
+                print(
+                    "You are making too many requests too quickly. Please wait and try again"
+                )
+                raise SystemExit(0)
+
             date_obj = datetime.datetime.strptime(
                 item_date, "%Y-%m-%dT%H:%M:%SZ"
             ).date()
@@ -168,7 +176,7 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
 
             # Checks through the month
             if datetime.date.today().month == date_obj.month:
-                statblock["month_count"] += count_monthly(item, statblock["month"])
+                statblock["month_count"] += count_monthly(item)
 
             # Checks through the current day
             if (
@@ -180,6 +188,11 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
                 statblock["daily"] += daily
                 statblock["daily_projects"] += projects
 
+                if item["type"] == "PushEvent":
+                    statblock["events_list"][item["type"]] += item["payload"]["size"]
+                else:
+                    statblock["events_list"][item["type"]] += 1
+
         try:
             resp = make_request(resp.links["next"], TOKEN)
         except KeyError:
@@ -188,7 +201,7 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
     return statblock
 
 
-def print_output(statblock: dict[str, Any], extend: bool) -> None:
+def print_output(statblock: dict[str, Any], args: argparse.Namespace) -> None:
     print(f"====== {datetime.date.today()} ======")
     print(f"Daily interactions: {statblock['daily']}")
 
@@ -198,7 +211,7 @@ def print_output(statblock: dict[str, Any], extend: bool) -> None:
     print(f"Total interactions: {statblock['count']}")
     # Interactions per repo today
 
-    if extend:
+    if args.extend:
         print(
             f"\nMonthly interactions ({statblock['month_name']}): {statblock['month_count']}"
         )
@@ -207,6 +220,11 @@ def print_output(statblock: dict[str, Any], extend: bool) -> None:
         print(f"Most active repo ({mcr[0]}): {mcr[1]}")
 
         print(f"Repos created this year: {statblock['new_repo_count']}")
+
+    if args.verbose and len(statblock["events_list"]) > 0:
+        print("\n===== Events Found =====")
+        for event, count in dict(statblock["events_list"]).items():
+            print(f"{event}: {count}")
 
 
 def add_token_config(tkn: str) -> None:
@@ -240,6 +258,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         "-e",
         "--extend",
         help="Show more statistics",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Display all events types for today",
         action="store_true",
     )
 
@@ -284,7 +309,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             TOKEN = f.read()
 
     statblock = parse_json(args, TOKEN)
-    print_output(statblock, args.extend)
+    print_output(statblock, args)
 
     return 0
 
