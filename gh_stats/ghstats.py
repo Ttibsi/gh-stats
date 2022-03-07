@@ -162,8 +162,6 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
                 )
                 raise SystemExit(0)
 
-            print(item["type"])
-
             date_obj = datetime.datetime.strptime(
                 item_date, "%Y-%m-%dT%H:%M:%SZ"
             ).date()
@@ -189,7 +187,11 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
                 daily, projects = count_today(item)
                 statblock["daily"] += daily
                 statblock["daily_projects"] += projects
-                statblock["events_list"][item["type"]] += 1
+
+                if item["type"] == "PushEvent":
+                    statblock["events_list"][item["type"]] += item["payload"]["size"]
+                else:
+                    statblock["events_list"][item["type"]] += 1
 
         try:
             resp = make_request(resp.links["next"], TOKEN)
@@ -262,7 +264,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "-v",
         "--verbose",
-        help="Display all event types.",
+        help="Display all events types for today",
         action="store_true",
     )
 
