@@ -1,5 +1,3 @@
 - github-style calendar visualisation
 - Count of consecutive days with commits
-
-verbose mode
-    - list every event type for today plus the repo it's going to
+- Improve test coverage
