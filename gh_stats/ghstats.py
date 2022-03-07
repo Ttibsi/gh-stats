@@ -86,9 +86,9 @@ def count_today(item: dict[str, Any]) -> tuple[int, Counter[str]]:
     if item["type"] == "PushEvent":
         int_ret = int(item["payload"]["size"])
         daily_counter[item["repo"]["name"]] += int_ret
-    elif item["type"] == "PullRequestEvent":
-        int_ret = int(item["payload"]["pull_request"]["commits"])
-        daily_counter[item["repo"]["name"]] += int_ret
+    # elif item["type"] == "PullRequestEvent":
+    #    int_ret = int(item["payload"]["pull_request"]["commits"])
+    #    daily_counter[item["repo"]["name"]] += int_ret
     elif item["type"] in GITHUB_EVENTS:
         int_ret = 1
         daily_counter[item["repo"]["name"]] += int_ret
