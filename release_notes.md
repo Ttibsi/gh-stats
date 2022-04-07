@@ -1,5 +1,9 @@
 # Release Notes
 
+### v1.1.0
+
+* Changed type hinting to allow for usage in python 3.7+
+
 ### v1.0.1
 
 * Rewrote most of the codebase for better functionality
