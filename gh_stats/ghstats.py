@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import argparse
 import datetime
 import os
@@ -6,7 +8,10 @@ import subprocess
 from collections import Counter
 from collections.abc import Sequence
 from typing import Any
+from typing import Dict
 from typing import NamedTuple
+from typing import Tuple
+from typing import Union
 
 import requests
 from pyinputplus import inputYesNo
@@ -31,10 +36,10 @@ GITHUB_EVENTS = frozenset(
 
 class Response(NamedTuple):
     json: Any
-    links: dict[str, str]
+    links: Dict[str, str]
 
 
-def parse_header(lnk: str | None) -> dict[str, str]:
+def parse_header(lnk: Union[str, None]) -> Dict[str, str]:
     if lnk is None:
         return {}
 
@@ -48,7 +53,7 @@ def parse_header(lnk: str | None) -> dict[str, str]:
     return ret
 
 
-def make_request(url: str, TOKEN: str | None) -> Response:
+def make_request(url: str, TOKEN: Union[str, None]) -> Response:
     if TOKEN:
         req = requests.get(url, headers={"Authorization": TOKEN})
     else:
@@ -63,12 +68,12 @@ def output_version() -> str:
     return f"Current version: {ver.strip().decode('utf-8')}"
 
 
-def get_current_month() -> tuple[str, str]:
+def get_current_month() -> Tuple[str, str]:
     today = datetime.date.today()
     return (today.strftime("%b"), f"{today.month:02}")
 
 
-def count_commits(item: dict[str, Any]) -> int:
+def count_commits(item: Dict[str, Any]) -> int:
     # Get year count
     if item["type"] == "PushEvent":
         return item["payload"]["size"]
@@ -80,7 +85,7 @@ def count_commits(item: dict[str, Any]) -> int:
         return 0
 
 
-def count_today(item: dict[str, Any]) -> tuple[int, Counter[str]]:
+def count_today(item: Dict[str, Any]) -> Tuple[int, Counter[str]]:
     daily_counter: Counter[str] = Counter()
 
     if item["type"] == "PushEvent":
@@ -96,7 +101,7 @@ def count_today(item: dict[str, Any]) -> tuple[int, Counter[str]]:
     return int_ret, daily_counter
 
 
-def count_monthly(item: dict[str, Any]) -> int:
+def count_monthly(item: Dict[str, Any]) -> int:
     commit_date = item["created_at"]
     month_obj = datetime.datetime.strptime(commit_date, "%Y-%m-%dT%H:%M:%SZ").month
 
@@ -111,7 +116,7 @@ def count_monthly(item: dict[str, Any]) -> int:
     return 0
 
 
-def count_per_repo(item: dict[str, Any]) -> Counter[str]:
+def count_per_repo(item: Dict[str, Any]) -> Counter[str]:
     # Count commits per repo
     repo_counter: Counter[str] = Counter()
 
@@ -125,15 +130,18 @@ def count_per_repo(item: dict[str, Any]) -> Counter[str]:
     return repo_counter
 
 
-def new_repos(item: dict[str, Any]) -> int:
+def new_repos(item: Dict[str, Any]) -> int:
     if item["type"] == "CreateEvent" and item["payload"]["ref_type"] == "repository":
         return 1
     else:
         return 0
 
 
-def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, Any]:
-    statblock: dict[str, Any] = {
+def parse_json(
+    args: argparse.Namespace, TOKEN: Union[str, None] = None
+) -> Dict[str, Any]:
+
+    statblock: Dict[str, Any] = {
         "username": args.username,
         "daily": 0,
         "daily_projects": Counter(),
@@ -201,7 +209,7 @@ def parse_json(args: argparse.Namespace, TOKEN: str | None = None) -> dict[str, 
     return statblock
 
 
-def print_output(statblock: dict[str, Any], args: argparse.Namespace) -> None:
+def print_output(statblock: Dict[str, Any], args: argparse.Namespace) -> None:
     print(f"====== {datetime.date.today()} ======")
     print(f"Daily interactions: {statblock['daily']}")
 
@@ -244,7 +252,7 @@ def add_token_config(tkn: str) -> None:
         tkn_file.write(tkn)
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(argv: Union[Sequence[str], None] = None) -> int:
     parser = argparse.ArgumentParser()
 
     parser.add_argument(

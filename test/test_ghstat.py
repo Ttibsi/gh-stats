@@ -14,7 +14,7 @@ def test_get_current_month():
 
 def test_count_commits():
     ret = 0
-    with open("test_data.json") as f:
+    with open("test/test_data.json") as f:
         obj = json.load(f)
 
     for item in obj:
@@ -26,7 +26,7 @@ def test_count_commits():
 @freezegun.freeze_time("2022-02-28")
 def test_count_monthly():
     ret = 0
-    with open("test_data.json") as f:
+    with open("test/test_data.json") as f:
         obj = json.load(f)
 
     for item in obj:
@@ -45,7 +45,7 @@ def test_count_per_repo():
         "clarkdave/DSACancellationChecker": 1,
     }
 
-    with open("test_data.json") as f:
+    with open("test/test_data.json") as f:
         obj = json.load(f)
 
     for item in obj:
@@ -57,7 +57,7 @@ def test_count_per_repo():
 def test_new_repos():
     ret = 0
 
-    with open("test_data.json") as f:
+    with open("test/test_data.json") as f:
         obj = json.load(f)
 
     for item in obj:
