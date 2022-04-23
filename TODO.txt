@@ -1,4 +1,0 @@
-- github-style calendar visualisation
-- Count of consecutive days with commits
-- Improve test coverage
-- Replace requests with urllib.requests

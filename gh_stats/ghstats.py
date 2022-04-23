@@ -152,12 +152,14 @@ def parse_json(
         "month_name": "",
         "projects": Counter(),
         "new_repo_count": 0,
+        "streaks":0,
     }
 
     statblock["month_name"], statblock["month"] = get_current_month()
     starting_url = f"https://api.github.com/users/{statblock['username']}/events"
 
     resp = make_request(starting_url, TOKEN)
+    previous_date = datetime.datetime.today().date()
 
     while True:
         for item in resp.json:
@@ -173,6 +175,10 @@ def parse_json(
             date_obj = datetime.datetime.strptime(
                 item_date, "%Y-%m-%dT%H:%M:%SZ"
             ).date()
+
+            if date_obj == (previous_date - datetime.timedelta(days=1)):
+                statblock['streaks'] += 1
+                previous_date = date_obj
 
             if datetime.date.today().year != date_obj.year:
                 break
@@ -209,6 +215,7 @@ def parse_json(
     return statblock
 
 
+#TODO: Prettier layout using textual/rich
 def print_output(statblock: Dict[str, Any], args: argparse.Namespace) -> None:
     print(f"====== {datetime.date.today()} ======")
     print(f"Daily interactions: {statblock['daily']}")
@@ -217,6 +224,7 @@ def print_output(statblock: Dict[str, Any], args: argparse.Namespace) -> None:
         print(f" - {k} : {v}")
 
     print(f"Total interactions: {statblock['count']}")
+    print(f"Streaks: {statblock['streaks']}")
     # Interactions per repo today
 
     if args.extend:
