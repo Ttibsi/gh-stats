@@ -1,5 +1,9 @@
 # Release Notes
 
+### v1.2.0
+
+* Added counting of consecutive days worth of commits
+
 ### v1.1.0
 
 * Changed type hinting to allow for usage in python 3.7+
