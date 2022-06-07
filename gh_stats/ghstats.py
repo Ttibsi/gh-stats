@@ -152,7 +152,7 @@ def parse_json(
         "month_name": "",
         "projects": Counter(),
         "new_repo_count": 0,
-        "streaks":0,
+        "streaks": 0,
     }
 
     statblock["month_name"], statblock["month"] = get_current_month()
@@ -177,7 +177,7 @@ def parse_json(
             ).date()
 
             if date_obj == (previous_date - datetime.timedelta(days=1)):
-                statblock['streaks'] += 1
+                statblock["streaks"] += 1
                 previous_date = date_obj
 
             if datetime.date.today().year != date_obj.year:
@@ -215,7 +215,7 @@ def parse_json(
     return statblock
 
 
-#TODO: Prettier layout using textual/rich
+# TODO: Prettier layout using textual/rich
 def print_output(statblock: Dict[str, Any], args: argparse.Namespace) -> None:
     print(f"====== {datetime.date.today()} ======")
     print(f"Daily interactions: {statblock['daily']}")
@@ -243,21 +243,31 @@ def print_output(statblock: Dict[str, Any], args: argparse.Namespace) -> None:
             print(f"{event}: {count}")
 
 
-def add_token_config(tkn: str) -> None:
+def add_token_config() -> None:
+    print("A github access token is required for more accurate calculation")
+    print(
+        "Please visit this site and generate a token: https://github.com/settings/tokens/new"
+    )
+    print("Make sure that `repo` and `read:user` are enabled")
+    print("\n------------------------------\n")
+
     if not os.path.exists(os.path.expanduser("~/.config/gh_stats")):
         os.mkdir(os.path.expanduser("~/.config/gh_stats/"))
     file_path = os.path.expanduser("~/.config/gh_stats/GITHUB_TOKEN")
 
     if os.path.exists(file_path):
-        validate = inputYesNo("Removing previous token. Continue?")
+        validate = inputYesNo("Removing previous token. Continue? (y/n)")
         if validate:
             os.remove(file_path)
         else:
             print("Aborting...")
             return
 
+    tkn = input("Paste token here: ")
     with open(file_path, "w") as tkn_file:
         tkn_file.write(tkn)
+
+    print("\nToken registered. Thank you.")
 
 
 def main(argv: Union[Sequence[str], None] = None) -> int:
@@ -309,7 +319,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
         print(output_version())
         return 0
     elif args.add_token:
-        add_token_config(args.add_token)
+        add_token_config()
         print("Token accepted")
         return 0
 
@@ -318,7 +328,7 @@ def main(argv: Union[Sequence[str], None] = None) -> int:
 
     file_path = os.path.expanduser("~/.config/gh_stats/GITHUB_TOKEN")
     if not os.path.exists(file_path):
-        print("No oauth token found - see README for details")
+        print("No oauth token found - run ghstats --add-token ")
         TOKEN = None
     else:
         with open(file_path) as f:
